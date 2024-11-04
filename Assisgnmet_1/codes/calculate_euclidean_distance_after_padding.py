@@ -95,7 +95,7 @@ def count_csv_rows(folder_path):
                     writer.writerow(empty_row)
             print(f"Padded {os.path.basename(file_path)} to {max_row_count} rows")
 
-scenario = "scenario_3"
+scenario = "scenario_6"
 folder_path = "/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/" + scenario
 for filename in os.listdir(folder_path):
     if not filename.endswith('.csv'):
