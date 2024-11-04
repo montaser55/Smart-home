@@ -38,6 +38,6 @@ def segment_file(input_file, device_name):
         segment_number += 1
 
 # Run segmentation for each device file
-segment_file('ledvance_to_coordinator_scenario1.pcapng', 'ledvance')
-segment_file('doorsensor_to_coordinator_scenario1.pcapng', 'doorsensor')
-segment_file('osarm_to_coordinator_scenario1.pcapng', 'osarm')
+segment_file('//Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/Scenario 1/device specific packets/ledvance_to_coordinator.pcapng', 'ledvance')
+segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/Scenario 1/device specific packets/doorsensor_to_coordinator.pcapng', 'doorsensor')
+segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/Scenario 1/device specific packets/osarm_to_coordinator.pcapng', 'osarm')

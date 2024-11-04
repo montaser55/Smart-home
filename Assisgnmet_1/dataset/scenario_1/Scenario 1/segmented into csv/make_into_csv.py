@@ -2,32 +2,35 @@ import pyshark
 import csv
 import os
 
-def process_segment(segment_file, device_mac, coordinator_mac="0x0000"):
+def process_segment(segment_file, device_mac, directory_name, coordinator_mac="0x0000"):
     capture = pyshark.FileCapture(segment_file, use_json=True, include_raw=True)
     packet_data = []
 
     for packet in capture:
-        if 'ZBEE_NWK' in packet:  # Check for ZigBee network layer
-            packet_size = int(packet.length)  # Use total packet size as before
+        if 'ZBEE_NWK' in packet:
+            packet_size = int(packet.length)
 
-            # Check for source and destination addresses
-            src_addr = getattr(packet.zbee_nwk, 'src64', None)
+            src_addr = getattr(packet.zbee_nwk, 'src', None)
             dst_addr = getattr(packet.zbee_nwk, 'dst', None)
-            
-            # Determine direction based on source and destination addresses
+
             if src_addr == device_mac and dst_addr == coordinator_mac:
                 direction = "A to B"
             elif src_addr == coordinator_mac and dst_addr == device_mac:
                 direction = "B to A"
             else:
-                continue  # Skip packets that aren’t between the device and coordinator
+                continue
 
             packet_data.append([packet_size, direction])
 
     capture.close()
+    #print(os.path.splitext(segment_file)[0].split('/')[-1])
+    location = "../../../../output/"
+    scenario = f'scenario_1/{directory_name}/'
+    output_directory = location + scenario
+    output_file = output_directory + os.path.splitext(segment_file)[0].split('/')[-1] + ".csv"
 
-    # Define output CSV file name and write data
-    output_file = os.path.splitext(segment_file)[0] + ".csv"
+    os.makedirs(output_directory, exist_ok=True)
+
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(["Packet Size", "Direction"])
@@ -35,5 +38,7 @@ def process_segment(segment_file, device_mac, coordinator_mac="0x0000"):
 
     print(f"Processed {segment_file} and saved to {output_file}")
 
-# Usage example: replace with specific file path and MAC addresses as needed
-process_segment("ledvance_segment_1.pcapng", "f0:d1:b8:00:00:1e:0e:db")
+for index in range(1, 49):
+    process_segment(f'../segmented packets/ledvance_segment_{index}.pcapng', "0xcf6c", "ledvance")
+    process_segment(f'../segmented packets/doorsensor_segment_{index}.pcapng', "0x7290", "doorsensor")
+    process_segment(f'../segmented packets/osarm_segment_{index}.pcapng', "0x8b7c","osarm")

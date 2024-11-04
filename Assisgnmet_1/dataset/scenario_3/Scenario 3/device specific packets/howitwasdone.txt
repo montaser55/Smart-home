@@ -1,6 +1,0 @@
-(zbee_nwk.src == 0xcf6c && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xcf6c)    —> ledvance ()
-
-(zbee_nwk.src == 0xe6c4 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xe6c4)    —> door sensor ()
-
-(zbee_nwk.src == 0xd0b9 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xd0b9) || (zbee_nwk.src == 0xdc52 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xdc52) || (zbee_nwk.src == 0xb547 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xb547) || (zbee_nwk.src == 0xacba && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xacba) || (zbee_nwk.src == 0xdd43 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xdd43)   —> motion sensor ()
-
