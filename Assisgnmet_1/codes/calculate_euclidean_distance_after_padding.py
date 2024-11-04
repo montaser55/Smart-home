@@ -71,10 +71,10 @@ def count_csv_rows(folder_path):
             with open(file_path, 'r') as file:
                 reader = csv.reader(file)
                 row_count = sum(1 for row in reader) - 1
-            if row_count <= 0:
-                os.remove(file_path)
-                print(f"Deleted {filename} (0 rows)")
-            else:
+            # if row_count <= 0:
+            #     os.remove(file_path)
+            #     print(f"Deleted {filename} (0 rows)")
+            # else:
                 csv_row_counts[file_path] = row_count
                 print(f"{filename}: {row_count} rows")
 
@@ -95,7 +95,7 @@ def count_csv_rows(folder_path):
                     writer.writerow(empty_row)
             print(f"Padded {os.path.basename(file_path)} to {max_row_count} rows")
 
-scenario = "scenario_1"
+scenario = "scenario_3"
 folder_path = "/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/" + scenario
 for filename in os.listdir(folder_path):
     if not filename.endswith('.csv'):
