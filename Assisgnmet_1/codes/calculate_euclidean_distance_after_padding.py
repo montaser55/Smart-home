@@ -50,7 +50,7 @@ def calculate_distances_between_all_files(folder_path, output_file):
 
     with open(output_file, 'w', newline='') as out_file:
         writer = csv.writer(out_file)
-        writer.writerow(["File1", "File2", "Average Distance"])  # Header
+        writer.writerow(["File1", "File2", "Average Distance"])
 
         files = list(csv_data.keys())
         for i in range(len(files)):
