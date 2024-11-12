@@ -37,6 +37,6 @@ def extract_zigbee_data(pcap_file, output_csv):
 
 
 # Example usage
-pcap_file = '/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assignment_2/dataset/pcap/scenario_1_ledvance_to_coordinator.pcapng'
-output_csv = '../dataset/csv/output_file.csv'
+pcap_file = '../task3/ledvance_to_coordinator.pcapng'
+output_csv = '../task3/output_file.csv'
 extract_zigbee_data(pcap_file, output_csv)
