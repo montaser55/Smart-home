@@ -1,5 +1,0 @@
-(zbee_nwk.src == 0xcf6c && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xcf6c)    —> ledvance
-
-(zbee_nwk.src == 0xd0b9 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xd0b9)    —> motion sensor
-
-(zbee_nwk.src == 0x8b7c && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0x8b7c)   —> osarm

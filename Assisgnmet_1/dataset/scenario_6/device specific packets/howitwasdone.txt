@@ -1,8 +1,0 @@
-(zbee_nwk.src == 0xcf6c && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xcf6c)    —> ledvance
-
-(zbee_nwk.src == 0x7290 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0x7290)    —> nedis door sensor
-
-(zbee_nwk.src == 0xe6c4 && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0xe6c4)    —> frient door sensor
-
-(zbee_nwk.src == 0x8b7c && zbee_nwk.dst == 0x0000) || (zbee_nwk.src == 0x0000 && zbee_nwk.dst == 0x8b7c)   —> osarm
-
