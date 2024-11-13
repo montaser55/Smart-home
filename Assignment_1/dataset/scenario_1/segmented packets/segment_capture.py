@@ -26,5 +26,5 @@ def segment_file(input_file, device_name):
         segment_number += 1
 
 segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/ledvance_to_coordinator.pcapng', 'ledvance')
-segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/doorsensor_to_coordinator.pcapng', 'doorsensor')
-segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/osarm_to_coordinator.pcapng', 'osarm')
+segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/scenario1_doorsensor_to_coordinator.pcapng', 'doorsensor')
+segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/scenario1_osarm_to_coordinator.pcapng', 'osarm')
