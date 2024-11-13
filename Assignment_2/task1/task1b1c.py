@@ -3,7 +3,6 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # file_path = 'scenario1.pcapng'
 # device_addresses = {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}
 
@@ -39,7 +38,6 @@ for packet in capture:
         packet_length = int(packet.length)
         packet_lengths[protocol].append(packet_length)
 
-        # check if packet belongs to zbee_nwk and extract source/destination addresses
         if hasattr(packet, 'zbee_nwk'):
             src_addr = packet.zbee_nwk.src
             dst_addr = packet.zbee_nwk.dst

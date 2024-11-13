@@ -17,12 +17,10 @@ def process_file(fp):
     for packet in capture:
         total_packet += 1
 
-        # Count protocols
         if hasattr(packet, 'highest_layer'):
             protocol = packet.highest_layer
             protocol_count[protocol] += 1
 
-        # Count Zigbee message types
         if hasattr(packet, 'zbee_nwk'):
             message_type = packet.zbee_nwk.frame_type
             message_type_count[message_type] += 1
@@ -50,7 +48,7 @@ def print_and_save_results(file, header, total_packets, protocol_counter, protoc
 
 file_paths = ['scenario1.pcapng', 'scenario2.pcapng', 'scenario3.pcapng', 'scenario4.pcapng', 'scenario5.pcapng', 'scenario6.pcapng']
 
-# Initialize cumulative counters
+# init cumulative counters
 cumulative_protocol_counter = Counter()
 cumulative_message_type_counter = Counter()
 cumulative_total_packets = 0
@@ -58,23 +56,21 @@ cumulative_total_packets = 0
 with open("analysis_results.txt", "w") as file:
     for file_path in file_paths:
 
-        # Process each file and get counters and total packets
         protocol_counter, message_type_counter, total_packets = process_file(file_path)
 
-        # Calculate fractions for the specific file
+        # calc fractions for the specific file
         protocol_fractions = calculate_fractions(protocol_counter, total_packets)
         message_type_fractions = calculate_fractions(message_type_counter, total_packets)
 
-        # Print and save individual file results
         header = f"Results for {file_path}"
         print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions)
 
-        # Update cumulative counters
+        # update cumulative counters
         cumulative_protocol_counter.update(protocol_counter)
         cumulative_message_type_counter.update(message_type_counter)
         cumulative_total_packets += total_packets
 
-    # Calculate and print cumulative results
+    # calc fractions for cumulative results
     cumulative_protocol_fractions = calculate_fractions(cumulative_protocol_counter, cumulative_total_packets)
     cumulative_message_type_fractions = calculate_fractions(cumulative_message_type_counter, cumulative_total_packets)
 
