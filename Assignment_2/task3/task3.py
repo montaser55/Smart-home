@@ -70,17 +70,12 @@ def plot_feature_vectors(cumulative_df, m_values):
     plt.show()
 
 # main
-file_path = "output_file.csv"
+file_path = "output_file2.csv"
 m_values = [90, 150, 200]
-
 df = load_and_add_data(file_path)
-
 calculate_statistics(df)
 print(f"\n {df}")
-
 cumulative_df = compute_cumulative_representation(df)
 print(f"\n {cumulative_df}")
-
 generate_feature_vectors(cumulative_df, m_values)
-
 plot_feature_vectors(cumulative_df, m_values)
