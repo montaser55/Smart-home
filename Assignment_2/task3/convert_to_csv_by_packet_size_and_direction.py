@@ -26,6 +26,7 @@ def extract_zigbee_data(pcap_file, output_csv):
     print(f"Data has been written to {output_csv}")
 
 
-pcap_file = 'scenario3_motionsensor_to_coordinator.pcapng'
-output_csv = 'output_file2.csv'
+pcap_file = '../dataset/pcap/device_specific_packets/scenario1_ledvance_to_coordinator.pcapng'
+output_csv = '../dataset/csv/packet_size_and_direction/scenario1_ledvance_to_coordinator.csv'
 extract_zigbee_data(pcap_file, output_csv)
+
