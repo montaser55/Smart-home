@@ -68,7 +68,7 @@ def generate_feature_vectors(cumulative_df, m_values, input_file_name):
 
 def plot_feature_vectors(cumulative_df, m_values, input_file_name):
     # Ensure the output directory exists
-    output_directory = "../output/plots"
+    output_directory = "../output/plots/feature_vector_plots"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
