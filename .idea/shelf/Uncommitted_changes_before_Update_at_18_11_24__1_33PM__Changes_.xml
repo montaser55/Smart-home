@@ -1,4 +1,4 @@
-<changelist name="Uncommitted_changes_before_Update_at_18_11_24,_1_33 PM_[Changes]" date="1731933181043" recycled="false" toDelete="true">
+<changelist name="Uncommitted_changes_before_Update_at_18_11_24,_1_33 PM_[Changes]" date="1731934199512" recycled="false" toDelete="true" deleted="true">
   <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_18_11_24,_1_33 PM_[Changes]/shelved.patch" />
   <option name="DESCRIPTION" value="Uncommitted changes before Update at 18/11/24, 1:33 PM [Changes]" />
   <binary>
@@ -13,6 +13,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario3.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario4_ledvance_to_coordinator.pcapng" />
@@ -26,6 +28,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario4.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario2_osarm_to_coordinator.pcapng" />
@@ -59,6 +63,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario6.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario2_waterleaksensor_to_coordinator.pcapng" />
@@ -67,6 +73,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario1.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario6_nedisdoorsensor_to_coordinator.pcapng" />
@@ -100,6 +108,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario5.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario3_motionsensor_to_coordinator.pcapng" />
@@ -108,6 +118,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/scenario2.pcapng" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="Assignment_2/dataset/pcap/device_specific_packets/scenario4_motionsensor_to_coordinator.pcapng" />

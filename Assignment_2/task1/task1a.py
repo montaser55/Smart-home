@@ -1,65 +1,78 @@
 import pyshark
 from collections import Counter
 
+def calculate_fractions(counter, total_packet):
+    fractions = {}
+    for item, count in counter.items():
+        fraction = count / total_packet
+        fractions[item] = fraction
+    return fractions
+
+def process_file(fp):
+    capture = pyshark.FileCapture(fp)
+    protocol_count = Counter()
+    message_type_count = Counter()
+    total_packet = 0
+
+    for packet in capture:
+        total_packet += 1
+
+        if hasattr(packet, 'highest_layer'):
+            protocol = packet.highest_layer
+            protocol_count[protocol] += 1
+
+        if hasattr(packet, 'zbee_nwk'):
+            message_type = packet.zbee_nwk.frame_type
+            message_type_count[message_type] += 1
+
+    capture.close()
+    return protocol_count, message_type_count, total_packet
+
+def print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions):
+    file.write(header + "\n")
+    file.write(f"Total Packets: {total_packets}\n")
+    file.write(f"Protocol Counts: {protocol_counter}\n")
+    file.write(f"Protocol Fractions: {protocol_fractions}\n")
+    file.write(f"Message Type Counts: {message_type_counter}\n")
+    file.write(f"Message Type Fractions: {message_type_fractions}\n")
+    file.write("\n" + "=" * 40 + "\n")
+
+    print(header)
+    print("Total Packets:", total_packets)
+    print("Protocol Counts:", protocol_counter)
+    print("Protocol Fractions:", protocol_fractions)
+    print("Message Type Counts:", message_type_counter)
+    print("Message Type Fractions:", message_type_fractions)
+    print("\n" + "=" * 40 + "\n")
+
+
 file_paths = ['scenario1.pcapng', 'scenario2.pcapng', 'scenario3.pcapng', 'scenario4.pcapng', 'scenario5.pcapng', 'scenario6.pcapng']
 
+# init cumulative counters
 cumulative_protocol_counter = Counter()
 cumulative_message_type_counter = Counter()
 cumulative_total_packets = 0
 
 with open("analysis_results.txt", "w") as file:
     for file_path in file_paths:
-        print(f"Processing file: {file_path}")
 
-        capture = pyshark.FileCapture(file_path)
+        protocol_counter, message_type_counter, total_packets = process_file(file_path)
 
-        protocol_counter = Counter()
-        message_type_counter = Counter()
-        total_packets = 0
+        # calc fractions for the specific file
+        protocol_fractions = calculate_fractions(protocol_counter, total_packets)
+        message_type_fractions = calculate_fractions(message_type_counter, total_packets)
 
-        for packet in capture:
-            total_packets += 1
+        header = f"Results for {file_path}"
+        print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions)
 
-            if hasattr(packet, 'highest_layer'):
-                protocol = packet.highest_layer
-                protocol_counter[protocol] += 1
-
-            if hasattr(packet, 'zbee_nwk'):
-                message_type = packet.zbee_nwk.frame_type
-                message_type_counter[message_type] += 1
-
-        # Calculate fractions for this specific scenario
-        protocol_fractions = {protocol: count / total_packets for protocol, count in protocol_counter.items()}
-        message_type_fractions = {msg_type: count / total_packets for msg_type, count in message_type_counter.items()}
-
-        print("Total Packets:", total_packets)
-        print("Protocol Counts:", protocol_counter)
-        print("Protocol Fractions:", protocol_fractions)
-        print("Message Type Counts:", message_type_counter)
-        print("Message Type Fractions:", message_type_fractions)
-        print("\n" + "=" * 40 + "\n")
-
-        # Accumulate the results into the cumulative counters
+        # update cumulative counters
         cumulative_protocol_counter.update(protocol_counter)
         cumulative_message_type_counter.update(message_type_counter)
         cumulative_total_packets += total_packets
 
-        capture.close()
+    # calc fractions for cumulative results
+    cumulative_protocol_fractions = calculate_fractions(cumulative_protocol_counter, cumulative_total_packets)
+    cumulative_message_type_fractions = calculate_fractions(cumulative_message_type_counter, cumulative_total_packets)
 
-    # Calculate cumulative fractions across all scenarios
-    cumulative_protocol_fractions = {protocol: count / cumulative_total_packets for protocol, count in cumulative_protocol_counter.items()}
-    cumulative_message_type_fractions = {msg_type: count / cumulative_total_packets for msg_type, count in cumulative_message_type_counter.items()}
-
-    file.write("Cumulative Results Across All Scenarios\n")
-    file.write(f"Total Packets: {cumulative_total_packets}\n")
-    file.write(f"Cumulative Protocol Counts: {cumulative_protocol_counter}\n")
-    file.write(f"Cumulative Protocol Fractions: {cumulative_protocol_fractions}\n")
-    file.write(f"Cumulative Message Type Counts: {cumulative_message_type_counter}\n")
-    file.write(f"Cumulative Message Type Fractions: {cumulative_message_type_fractions}\n")
-
-    print("Cumulative Results Across All Scenarios")
-    print("Total Packets:", cumulative_total_packets)
-    print("Cumulative Protocol Counts:", cumulative_protocol_counter)
-    print("Cumulative Protocol Fractions:", cumulative_protocol_fractions)
-    print("Cumulative Message Type Counts:", cumulative_message_type_counter)
-    print("Cumulative Message Type Fractions:", cumulative_message_type_fractions)
+    header = "Cumulative Results Across All Scenarios"
+    print_and_save_results(file, header, cumulative_total_packets, cumulative_protocol_counter, cumulative_protocol_fractions, cumulative_message_type_counter, cumulative_message_type_fractions)
