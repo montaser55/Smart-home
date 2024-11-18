@@ -28,11 +28,11 @@ def get_all_device_mac_addresses():
         mac_addresses.extend(mac_list)
     return mac_addresses
 
-def extract_zigbee_data(pcap_file, output_directory, scenario):
+def extract_zigbee_data(pcap_file):
     capture = pyshark.FileCapture(pcap_file, display_filter="zbee_nwk")
-    packet_data = []  # Consolidated packet size data
-    interarrival_data = []  # Consolidated inter-arrival time data
-    last_packet_times = defaultdict(dict)  # Track last packet time for each device pair
+    packet_data = []
+    interarrival_data = []
+    last_packet_times = defaultdict(dict)
 
     try:
         for packet in capture:
@@ -51,10 +51,7 @@ def extract_zigbee_data(pcap_file, output_directory, scenario):
                 source_device = get_device_name(source_mac)
                 destination_device = get_device_name(destination_mac)
 
-                # Add to packet data
                 packet_data.append([direction, source_device, destination_device, packet_size])
-
-                # Calculate inter-arrival time
 
                 pair_key = tuple(sorted([source_mac, destination_mac]))
 
@@ -66,14 +63,15 @@ def extract_zigbee_data(pcap_file, output_directory, scenario):
 
                 last_packet_times[pair_key] = packet.sniff_time
 
-                # Add to inter-arrival time data
                 interarrival_data.append([direction, source_device, destination_device, inter_arrival_time])
     except Exception as e:
         print(f"Error occurred while processing the capture: {e}")
     finally:
         capture.close()
 
-    # Write consolidated packet size data
+
+
+def write_into_files(packet_data, interarrival_data, output_directory, scenario):
     os.makedirs(f"{output_directory}/packet_size", exist_ok=True)
     packet_size_csv = f"{output_directory}/packet_size/{scenario}_packet_size.csv"
     with open(packet_size_csv, mode='w', newline='') as f:
@@ -82,20 +80,23 @@ def extract_zigbee_data(pcap_file, output_directory, scenario):
         writer.writerows(packet_data)
     print(f"Packet size data has been written to {packet_size_csv}")
 
-    # Write consolidated inter-arrival time data
     os.makedirs(f"{output_directory}/inter_arrival_time", exist_ok=True)
     inter_arrival_csv = f"{output_directory}/inter_arrival_time/{scenario}_interarrival_times.csv"
     with open(inter_arrival_csv, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Inter-Arrival Time"])
         for row in interarrival_data:
-            if row[-1] is not None:  # Skip None values for inter-arrival times
+            if row[-1] is not None:
                 writer.writerow(row[-1:])
     print(f"Inter-arrival time data has been written to {inter_arrival_csv}")
 
-output_directory = "../dataset/csv3"
+
+output_directory = "../dataset/csv"
 folder_path = "../dataset/pcap/filtered_scenario_packets/"
+
 for filename in os.listdir(folder_path):
     if filename.endswith('.pcapng'):
         pcap_file = folder_path + filename
-        extract_zigbee_data(pcap_file, output_directory, filename.split(".")[0].split("_")[0])
+        packet_data, interarrival_data = extract_zigbee_data(pcap_file)
+        scenario = filename.split(".")[0].split("_")[0]
+        write_into_files(packet_data, interarrival_data,  output_directory, scenario)
