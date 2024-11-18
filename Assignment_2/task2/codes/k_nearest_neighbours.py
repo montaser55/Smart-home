@@ -1,3 +1,6 @@
+import os
+import time
+
 import numpy as np
 import random
 import argparse
@@ -46,14 +49,24 @@ def find_k_nearest_neighbors(data, sample, k):
 
 def generate_synthetic_samples(data, k, total_synthetic_samples):
     synthetic_data = []
+    samples_to_generate = total_synthetic_samples // len(data)  # Evenly distribute synthetic samples across the dataset
+    remaining_samples = total_synthetic_samples % len(data)  # Handle any remaining samples
+
     for i, sample in enumerate(data):
-        if i < total_synthetic_samples:
-            k_neighbors = find_k_nearest_neighbors(data, sample, k)
-            neighbor = random.choice(k_neighbors)
+        for _ in range(samples_to_generate):
+            neighbor = random.choice(find_k_nearest_neighbors(data, sample, k))
             diff = neighbor - sample
             random_scale = random.uniform(0, 1)
             synthetic_sample = sample + random_scale * diff
             synthetic_data.append(synthetic_sample)
+
+        if i < remaining_samples:
+            neighbor = random.choice(find_k_nearest_neighbors(data, sample, k))
+            diff = neighbor - sample
+            random_scale = random.uniform(0, 1)
+            synthetic_sample = sample + random_scale * diff
+            synthetic_data.append(synthetic_sample)
+
     return np.array(synthetic_data)
 
 
@@ -76,7 +89,6 @@ def load_data(file_path):
 
 
 def main(input_data, data_type, normalization_method, k_values, synthetic_sample_percentage):
-    # Normalize data and capture necessary values for denormalization
     if normalization_method == 'min_max':
         data, min_vals, max_vals = min_max_normalization(input_data)
         param1, param2 = min_vals, max_vals
@@ -88,13 +100,13 @@ def main(input_data, data_type, normalization_method, k_values, synthetic_sample
     else:
         raise ValueError("Invalid normalization method specified.")
 
-    # Generate synthetic samples
+    start_time = time.time()
     total_synthetic_samples = int(synthetic_sample_percentage * len(data) / 100)
     synthetic_datasets = {}
     for k in k_values:
         synthetic_data = generate_synthetic_samples(data, k, total_synthetic_samples)
-        # Denormalize synthetic data before saving
-        synthetic_datasets[f"synthetic_k_{k}"] = denormalize_fn(synthetic_data, param1, param2)
+        synthetic_datasets[f"k{k}"] = denormalize_fn(synthetic_data, param1, param2)
+    print(f"Synthetic data generation completed in {time.time() - start_time:.2f} seconds.")
 
     return synthetic_datasets, data_type
 
@@ -111,19 +123,44 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Load dataset and determine data type
     input_data, data_type = load_data(args.data_file)
+
     synthetic_datasets, data_type = main(input_data, data_type, args.normalization, args.k_values,
                                          args.synthetic_percentage)
 
-    # Save synthetic datasets
+    output_directory = "../output/"
+    output_file = ""
     for key, synthetic_data in synthetic_datasets.items():
         if data_type == "inter_arrival":
-            np.savetxt(f"{key}.csv", synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
+            output_file = f"{output_directory}/interarrival_{key}.csv"
+            np.savetxt(output_file, synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
                        comments="")
         elif data_type == "direction_packet_size":
             decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
-            output_data = np.column_stack((decoded_directions, synthetic_data[:, 1]))
-            np.savetxt(f"{key}.csv", output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
+            formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
+            output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
+            output_file = f"{output_directory}/packet_size_{key}.csv"
+            np.savetxt(output_file, output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
                        comments="")
-        print(f"Saved {key}.csv")
+        print(f"Saved to {output_file}")
+
+
+# output_directory = "../output/synthetic_datasets/"
+# folder_path = "../dataset/csv/packet_size/"
+# for filename in os.listdir(folder_path):
+#     if filename.endswith('.csv'):
+#         input_data, data_type = load_data(folder_path + filename)
+#         synthetic_datasets, data_type = main(input_data, data_type, 'min_max', [3,5],
+#                                              100)
+#
+#         for key, synthetic_data in synthetic_datasets.items():
+#             if data_type == "inter_arrival":
+#                 np.savetxt(f"{output_directory}/interarrival_time/{filename.split('.')[0]}_{key}.csv", synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
+#                            comments="")
+#             elif data_type == "direction_packet_size":
+#                 decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
+#                 formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
+#                 output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
+#                 np.savetxt(f"{output_directory}/packet_size/{filename.split('.')[0]}_{key}.csv", output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
+#                            comments="")
+#             print(f"Saved {filename.split('.')[0]} {key}.csv")

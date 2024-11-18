@@ -5,17 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54b0d072-bcb3-429d-96df-84117c0ad944" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_11_24__16_40__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_11_24__16_40__Changes_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_18_11_24__1_33PM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_18_11_24__1_33PM__Changes_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/convert_to_csv_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/Assignment_2/task3/convert_to_csv_by_packet_size_and_direction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/feature_vector_m_150.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/feature_vector_m_2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/feature_vector_m_200.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/feature_vector_m_90.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/ledvance_to_coordinator.pcapng" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/output_file.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/output_file2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/scenario3_motionsensor_to_coordinator.pcapng" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment_2/task3/task3.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assignment_2/codes/convert_to_csv.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assignment_2/codes/k_nearest_neighbours.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assignment_2/codes/synthetic_k_3.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assignment_2/codes/synthetic_k_5.csv" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +58,7 @@
     "Python.test_to_conver_to_csv.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/ali/Documents/Smart-home/Assignment_2/task3",
+    "last_opened_file_path": "/Users/montasermajid/Documents/Btu Cottbus/Smart-home",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -99,6 +96,7 @@
       <updated>1731410755111</updated>
       <workItem from="1731410756220" duration="12138000" />
       <workItem from="1731447865052" duration="48133000" />
+      <workItem from="1731935116086" duration="299000" />
     </task>
     <servers />
   </component>
