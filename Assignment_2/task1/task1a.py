@@ -46,7 +46,7 @@ def print_and_save_results(file, header, total_packets, protocol_counter, protoc
     print("\n" + "=" * 40 + "\n")
 
 
-file_paths = ['scenario1.pcapng', 'scenario2.pcapng', 'scenario3.pcapng', 'scenario4.pcapng', 'scenario5.pcapng', 'scenario6.pcapng']
+file_paths = ['../dataset/pcap/scenario1.pcapng', '../dataset/pcap/scenario2.pcapng', '../dataset/pcap/scenario3.pcapng', '../dataset/pcap/scenario4.pcapng', '../dataset/pcap/scenario5.pcapng', '../dataset/pcap/scenario6.pcapng']
 
 # init cumulative counters
 cumulative_protocol_counter = Counter()
