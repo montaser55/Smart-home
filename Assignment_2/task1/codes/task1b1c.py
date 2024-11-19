@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-os.makedirs("./plots", exist_ok=True)
+os.makedirs("../output/plots", exist_ok=True)
 
 def process_packet_lengths(packet, packet_lengths):
     protocol = packet.highest_layer
@@ -81,7 +81,7 @@ def plot_cdf(packet_lengths, scenario_name):
     plt.ylabel('Cumulative Probability')
     plt.legend(title="Protocols", loc='best')
     plt.grid(True)
-    plt.savefig(f"./plots/scenario_{scenario_name}_packet_sizes_cdf.png")
+    plt.savefig(f"../output/plots/scenario_{scenario_name}_packet_sizes_cdf.png")
     plt.show()
 
 
@@ -113,21 +113,21 @@ def plot_ccdf(inter_arrival_times, scenario_name):
 
     ax1.legend(loc="upper right", fontsize=8, title="Protocols and Pairs")
     plt.tight_layout()
-    plt.savefig(f"./plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
+    plt.savefig(f"../output/plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
     plt.show()
 
 
 scenarios = {
-    "1": {"file_path": "pcap/scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
-    "2": {"file_path": "pcap/scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
+    "1": {"file_path": "../pcap/scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
+    "2": {"file_path": "../pcap/scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
     "3": {
-        "file_path": "pcap/scenario3.pcapng",
+        "file_path": "../pcap/scenario3.pcapng",
         "device_addresses": {"0xe6c4", "0xcf6c", "0x0000", "MotionSensor"},
         "motion_sensor_addresses": {"0xd0b9", "0xdc52", "0xb547", "0xacba", "0xdd43"}
     },
-    "4": {"file_path": "pcap/scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "5": {"file_path": "pcap/scenario5.pcapng", "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "6": {"file_path": "pcap/scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
+    "4": {"file_path": "../pcap/scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
+    "5": {"file_path": "../pcap/scenario5.pcapng", "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
+    "6": {"file_path": "../pcap/scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
 }
 
 print("Available Scenarios:")

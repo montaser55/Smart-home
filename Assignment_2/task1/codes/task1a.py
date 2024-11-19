@@ -47,7 +47,7 @@ def print_and_save_results(file, header, total_packets, protocol_counter, protoc
     print("\n" + "=" * 40 + "\n")
 
 # Base directory for the files
-base_directory = "pcap"
+base_directory = "../pcap"
 
 file_names = ['scenario1.pcapng',
               'scenario2.pcapng',
@@ -65,7 +65,7 @@ cumulative_protocol_counter = Counter()
 cumulative_message_type_counter = Counter()
 cumulative_total_packets = 0
 
-with open("analysis_results.txt", "w") as file:
+with open("../output/task_1a_analysis_results.txt", "w") as file:
     for file_path in file_paths:
 
         protocol_counter, message_type_counter, total_packets = process_file(file_path)
