@@ -55,15 +55,16 @@ def generate_synthetic_samples(data, k, total_synthetic_samples):
     remaining_samples = total_synthetic_samples % len(data)  # Handle any remaining samples
 
     for i, sample in enumerate(data):
+        k_neighbors = find_k_nearest_neighbors(data, sample, k)
         for _ in range(samples_to_generate):
-            neighbor = random.choice(find_k_nearest_neighbors(data, sample, k))
+            neighbor = random.choice(k_neighbors)
             diff = neighbor - sample
             random_scale = random.uniform(0, 1)
             synthetic_sample = sample + random_scale * diff
             synthetic_data.append(synthetic_sample)
 
         if i < remaining_samples:
-            neighbor = random.choice(find_k_nearest_neighbors(data, sample, k))
+            neighbor = random.choice(k_neighbors)
             diff = neighbor - sample
             random_scale = random.uniform(0, 1)
             synthetic_sample = sample + random_scale * diff
