@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def adjust_packet_size(row):
     if row['Direction'] == 'outgoing':
         return row['PacketSize']
@@ -81,7 +80,7 @@ def plot_feature_vectors(cumulative_df, m_values, input_file_name):
         indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
         sampled_features = cumulative_df.iloc[indices]
 
-        plt.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], marker=".", markersize=4, label=f"m={m}")
+        plt.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], linestyle='-', linewidth=1, label=f"m={m}")
 
     plt.title("Feature Vectors for Communication Flow")
     plt.xlabel("Absolute Sum")
@@ -95,6 +94,94 @@ def plot_feature_vectors(cumulative_df, m_values, input_file_name):
 
     plt.show()
 
+
+def plot_feature_vectors_with_subplots(cumulative_df, m_values, input_file_name):
+    # Ensure the output directory exists
+    output_directory = "../output/plots/feature_vector_plots"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    # Extract the base name without the extension
+    base_name = os.path.splitext(os.path.basename(input_file_name))[0]
+
+    # Create subplots for each m value
+    num_subplots = len(m_values)
+    fig, axes = plt.subplots(num_subplots, 1, figsize=(10, 6 * num_subplots), sharex=True)
+
+    if num_subplots == 1:
+        axes = [axes]  # Ensure axes is always iterable
+
+    for idx, (ax, m) in enumerate(zip(axes, m_values)):
+        indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
+        sampled_features = cumulative_df.iloc[indices]
+
+        # Plot data on the current subplot
+        ax.plot(
+            sampled_features["AbsoluteSum"],
+            sampled_features["CumulativeSum"],
+            marker=".",
+            markersize=4,
+            label=f"m={m}"
+        )
+
+        ax.set_title(f"Feature Vectors for Communication Flow (m={m})")
+        ax.set_xlabel("Absolute Sum")
+        ax.set_ylabel("Cumulative Sum")
+        ax.legend()
+
+    plt.tight_layout()
+
+    # Save the plot to the output directory
+    output_file_path = os.path.join(output_directory, f"{base_name}_feature_vectors_subplots.png")
+    plt.savefig(output_file_path)
+    print(f"Plot saved to {output_file_path}")
+
+    plt.show()
+
+
+def plot_feature_vectors_side_by_side(cumulative_df, m_values, input_file_name):
+    # Ensure the output directory exists
+    output_directory = "../output/plots/feature_vector_plots"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    # Extract the base name without the extension
+    base_name = os.path.splitext(os.path.basename(input_file_name))[0]
+
+    # Create subplots for each m value (side by side)
+    num_subplots = len(m_values)
+    fig, axes = plt.subplots(1, num_subplots, figsize=(8 * num_subplots, 6), sharey=True)
+
+    if num_subplots == 1:
+        axes = [axes]  # Ensure axes is always iterable
+
+    for idx, (ax, m) in enumerate(zip(axes, m_values)):
+        indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
+        sampled_features = cumulative_df.iloc[indices]
+
+        # Plot data on the current subplot
+        ax.plot(
+            sampled_features["AbsoluteSum"],
+            sampled_features["CumulativeSum"],
+            marker=".",
+            markersize=4,
+            label=f"m={m}"
+        )
+
+        ax.set_title(f"m={m}")
+        ax.set_xlabel("Absolute Sum")
+        ax.set_ylabel("Cumulative Sum")
+        ax.legend()
+
+    plt.suptitle("Feature Vectors for Communication Flow", fontsize=16)
+    plt.tight_layout()
+
+    # Save the plot to the output directory
+    output_file_path = os.path.join(output_directory, f"{base_name}_feature_vectors_side_by_side.png")
+    plt.savefig(output_file_path)
+    print(f"Plot saved to {output_file_path}")
+
+    plt.show()
 
 
 # Base directory for the files
@@ -146,6 +233,8 @@ if 0 <= selected_index < len(file_paths):
 
     m_values = [90, 150, 200]
     generate_feature_vectors(cumulative_df, m_values, file_path)
-    plot_feature_vectors(cumulative_df, m_values, file_path)
+    plot_feature_vectors_side_by_side(cumulative_df, m_values, file_path)
+    # plot_feature_vectors_with_subplots(cumulative_df, m_values, file_path)
+    # plot_feature_vectors(cumulative_df, m_values, file_path)
 else:
     print("Invalid selection. Please try again.")
