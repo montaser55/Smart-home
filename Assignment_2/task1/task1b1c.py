@@ -2,7 +2,9 @@ import pyshark
 from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
+os.makedirs("./plots", exist_ok=True)
 
 def process_packet_lengths(packet, packet_lengths):
     protocol = packet.highest_layer
@@ -57,38 +59,33 @@ def print_inter_arrival_time_statistics(inter_arrival_times):
             print(f"Median Inter-Arrival Time: {median_time:.4f} seconds")
 
 
-def plot_cdf(packet_lengths):
+def plot_cdf(packet_lengths, scenario_name):
     plt.figure(figsize=(12, 8))
+
+    all_packet_sizes = []
 
     for protocol, lengths in packet_lengths.items():
         if len(lengths) > 0:
             sorted_lengths = np.sort(lengths)
             cdf = np.arange(1, len(sorted_lengths) + 1) / len(sorted_lengths)
             plt.plot(sorted_lengths, cdf, label=f'{protocol}', linewidth=1.5)
+            all_packet_sizes.extend(lengths)
+
+    if all_packet_sizes:
+        sorted_all_sizes = np.sort(all_packet_sizes)
+        cdf_all_sizes = np.arange(1, len(sorted_all_sizes) + 1) / len(sorted_all_sizes)
+        plt.plot(sorted_all_sizes, cdf_all_sizes, linestyle='--', linewidth=1.5, label='All Protocols', color='black')
 
     plt.title('Cumulative Distribution Function (CDF) of Packet Sizes by Protocol')
     plt.xlabel('Packet Size (bytes)')
     plt.ylabel('Cumulative Probability')
     plt.legend(title="Protocols", loc='best')
     plt.grid(True)
+    plt.savefig(f"./plots/scenario_{scenario_name}_packet_sizes_cdf.png")
     plt.show()
 
 
-def plot_combined_cdf(packet_lengths):
-    all_packet_sizes = [size for sizes in packet_lengths.values() for size in sizes]
-    sorted_all_sizes = np.sort(all_packet_sizes)
-    cdf_all_sizes = np.arange(1, len(sorted_all_sizes) + 1) / len(sorted_all_sizes)
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(sorted_all_sizes, cdf_all_sizes, linestyle='-', linewidth=1.5)
-    plt.title('Cumulative Distribution Function (CDF) of Packet Sizes for the Entire Scenario')
-    plt.xlabel('Packet Size (bytes)')
-    plt.ylabel('Cumulative Probability')
-    plt.grid(True)
-    plt.show()
-
-
-def plot_ccdf(inter_arrival_times):
+def plot_ccdf(inter_arrival_times, scenario_name):
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [2, 1]}, figsize=(14, 6))
 
     for protocol, pairs in inter_arrival_times.items():
@@ -116,20 +113,21 @@ def plot_ccdf(inter_arrival_times):
 
     ax1.legend(loc="upper right", fontsize=8, title="Protocols and Pairs")
     plt.tight_layout()
+    plt.savefig(f"./plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
     plt.show()
 
 
 scenarios = {
-    "1": {"file_path": "scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
-    "2": {"file_path": "scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
+    "1": {"file_path": "pcap/scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
+    "2": {"file_path": "pcap/scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
     "3": {
-        "file_path": "scenario3.pcapng",
+        "file_path": "pcap/scenario3.pcapng",
         "device_addresses": {"0xe6c4", "0xcf6c", "0x0000", "MotionSensor"},
         "motion_sensor_addresses": {"0xd0b9", "0xdc52", "0xb547", "0xacba", "0xdd43"}
     },
-    "4": {"file_path": "scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "5": {"file_path": "scenario5.pcapng", "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "6": {"file_path": "scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
+    "4": {"file_path": "pcap/scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
+    "5": {"file_path": "pcap/scenario5.pcapng", "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
+    "6": {"file_path": "pcap/scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
 }
 
 print("Available Scenarios:")
@@ -163,8 +161,8 @@ if selected_scenario in scenarios:
 
     print_packet_length_statistics(packet_lengths)
     print_inter_arrival_time_statistics(inter_arrival_times)
-    plot_cdf(packet_lengths)
-    plot_combined_cdf(packet_lengths)
-    plot_ccdf(inter_arrival_times)
+    plot_cdf(packet_lengths, selected_scenario)
+    plot_ccdf(inter_arrival_times, selected_scenario)
+
 else:
     print("Invalid scenario number. Please try again.")
