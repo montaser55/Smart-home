@@ -5,6 +5,8 @@ import numpy as np
 import random
 import argparse
 
+INTERARRIVAL_DATA_TYPE = "inter_arrival"
+PACKETSIZE_DATA_TYPE = "direction_packet_size"
 
 def encode_direction(direction):
     return 0 if direction == 'receive' else 1
@@ -77,18 +79,18 @@ def load_data(file_path):
     if "Inter-Arrival Time" in header:
         raw_data = np.genfromtxt(file_path, delimiter=',', skip_header=1)
         input_data = raw_data.reshape(-1, 1)
-        return input_data, "inter_arrival"
+        return input_data, INTERARRIVAL_DATA_TYPE
     elif "Direction" in header:
         raw_data = np.genfromtxt(file_path, delimiter=',', skip_header=1, dtype=str)
         directions = np.array([encode_direction(row[0]) for row in raw_data])  # Encode Direction column
         packet_sizes = np.array([float(row[3]) for row in raw_data])  # Use Packet Size as float
         input_data = np.column_stack((directions, packet_sizes))  # Combine into 2D array
-        return input_data, "direction_packet_size"
+        return input_data, PACKETSIZE_DATA_TYPE
     else:
         raise ValueError("Unknown CSV format.")
 
 
-def main(input_data, data_type, normalization_method, k_values, synthetic_sample_percentage):
+def generate_data(input_data, data_type, normalization_method, k_values, synthetic_sample_percentage):
     if normalization_method == 'min_max':
         data, min_vals, max_vals = min_max_normalization(input_data)
         param1, param2 = min_vals, max_vals
@@ -111,6 +113,24 @@ def main(input_data, data_type, normalization_method, k_values, synthetic_sample
     return synthetic_datasets, data_type
 
 
+def save_file(synthetic_datasets, data_type):
+    output_directory = "../output/"
+    output_file = ""
+    for key, synthetic_data in synthetic_datasets.items():
+        if data_type == INTERARRIVAL_DATA_TYPE:
+            output_file = f"{output_directory}/interarrival_{key}.csv"
+            np.savetxt(output_file, synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
+                       comments="")
+        elif data_type == PACKETSIZE_DATA_TYPE:
+            decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
+            formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
+            output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
+            output_file = f"{output_directory}/packet_size_{key}.csv"
+            np.savetxt(output_file, output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
+                       comments="")
+        print(f"Saved to {output_file}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate Synthetic Zigbee Network Data")
     parser.add_argument("--data_file", type=str, required=True, help="Path to input dataset (CSV format)")
@@ -122,28 +142,10 @@ if __name__ == "__main__":
                         help="Percentage of synthetic samples relative to the real dataset size")
 
     args = parser.parse_args()
-
     input_data, data_type = load_data(args.data_file)
-
-    synthetic_datasets, data_type = main(input_data, data_type, args.normalization, args.k_values,
+    synthetic_datasets, data_type = generate_data(input_data, data_type, args.normalization, args.k_values,
                                          args.synthetic_percentage)
-
-    output_directory = "../output/"
-    output_file = ""
-    for key, synthetic_data in synthetic_datasets.items():
-        if data_type == "inter_arrival":
-            output_file = f"{output_directory}/interarrival_{key}.csv"
-            np.savetxt(output_file, synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
-                       comments="")
-        elif data_type == "direction_packet_size":
-            decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
-            formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
-            output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
-            output_file = f"{output_directory}/packet_size_{key}.csv"
-            np.savetxt(output_file, output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
-                       comments="")
-        print(f"Saved to {output_file}")
-
+    save_file(synthetic_datasets, data_type)
 
 # output_directory = "../output/synthetic_datasets/"
 # folder_path = "../dataset/csv/packet_size/"
