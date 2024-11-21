@@ -7,6 +7,11 @@ import os
 os.makedirs("../output/plots", exist_ok=True)
 
 def process_packet_lengths(packet, packet_lengths):
+
+    protocol = packet.highest_layer
+    if protocol == '_WS.MALFORMED':
+        return
+
     protocol = packet.highest_layer
     packet_length = int(packet.length)
     packet_lengths[protocol].append(packet_length)
@@ -17,7 +22,7 @@ def process_inter_arrival_times(packet, device_addresses, previous_timestamps, i
         src_addr = packet.zbee_nwk.src
         dst_addr = packet.zbee_nwk.dst
 
-        # special handling for scenario 3
+        # special case for scenario 3
         if motion_sensor_addresses is not None:
             if src_addr in motion_sensor_addresses:
                 src_addr = "MotionSensor"
@@ -65,6 +70,10 @@ def plot_cdf(packet_lengths, scenario_name):
     all_packet_sizes = []
 
     for protocol, lengths in packet_lengths.items():
+
+        if protocol == '_WS.MALFORMED':
+            continue
+
         if len(lengths) > 0:
             sorted_lengths = np.sort(lengths)
             cdf = np.arange(1, len(sorted_lengths) + 1) / len(sorted_lengths)
@@ -79,7 +88,7 @@ def plot_cdf(packet_lengths, scenario_name):
     plt.title('Cumulative Distribution Function (CDF) of Packet Sizes by Protocol')
     plt.xlabel('Packet Size (bytes)')
     plt.ylabel('Cumulative Probability')
-    plt.legend(title="Protocols", loc='best')
+    plt.legend(title="Protocols", loc='lower right')
     plt.grid(True)
     plt.savefig(f"../output/plots/scenario_{scenario_name}_packet_sizes_cdf.png")
     plt.show()
@@ -111,7 +120,7 @@ def plot_ccdf(inter_arrival_times, scenario_name):
     ax1.yaxis.tick_left()
     ax2.yaxis.tick_right()
 
-    ax1.legend(loc="upper right", fontsize=8, title="Protocols and Pairs")
+    ax1.legend(loc="upper left", fontsize=8, title="Protocols and Pairs")
     plt.tight_layout()
     plt.savefig(f"../output/plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
     plt.show()

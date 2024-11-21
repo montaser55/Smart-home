@@ -1,6 +1,5 @@
 import pyshark
 from collections import Counter
-import os
 
 def calculate_fractions(counter, total_packet):
     fractions = {}
@@ -36,7 +35,7 @@ def print_and_save_results(file, header, total_packets, protocol_counter, protoc
     file.write(f"Protocol Fractions: {protocol_fractions}\n")
     file.write(f"Message Type Counts: {message_type_counter}\n")
     file.write(f"Message Type Fractions: {message_type_fractions}\n")
-    file.write("\n" + "=" * 40 + "\n")
+    file.write("\n" + "=" * 50 + "\n")
 
     print(header)
     print("Total Packets:", total_packets)
@@ -44,23 +43,17 @@ def print_and_save_results(file, header, total_packets, protocol_counter, protoc
     print("Protocol Fractions:", protocol_fractions)
     print("Message Type Counts:", message_type_counter)
     print("Message Type Fractions:", message_type_fractions)
-    print("\n" + "=" * 40 + "\n")
+    print("\n" + "=" * 50 + "\n")
 
-# Base directory for the files
 base_directory = "../pcap"
-
 file_names = ['scenario1.pcapng',
               'scenario2.pcapng',
               'scenario3.pcapng',
               'scenario4.pcapng',
               'scenario5.pcapng',
               'scenario6.pcapng']
+file_paths = [f"{base_directory}/{file_name}" for file_name in file_names]
 
-# Prepend the base directory to each file name
-file_paths = [os.path.join(base_directory, file_name) for file_name in file_names]
-
-
-# init cumulative counters
 cumulative_protocol_counter = Counter()
 cumulative_message_type_counter = Counter()
 cumulative_total_packets = 0
@@ -70,21 +63,16 @@ with open("../output/task_1a_analysis_results.txt", "w") as file:
 
         protocol_counter, message_type_counter, total_packets = process_file(file_path)
 
-        # calc fractions for the specific file
         protocol_fractions = calculate_fractions(protocol_counter, total_packets)
         message_type_fractions = calculate_fractions(message_type_counter, total_packets)
 
-        header = f"Results for {file_path}"
-        print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions)
+        print_and_save_results(file, f"Results for {file_path}", total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions)
 
-        # update cumulative counters
         cumulative_protocol_counter.update(protocol_counter)
         cumulative_message_type_counter.update(message_type_counter)
         cumulative_total_packets += total_packets
 
-    # calc fractions for cumulative results
     cumulative_protocol_fractions = calculate_fractions(cumulative_protocol_counter, cumulative_total_packets)
     cumulative_message_type_fractions = calculate_fractions(cumulative_message_type_counter, cumulative_total_packets)
 
-    header = "Cumulative Results Across All Scenarios"
-    print_and_save_results(file, header, cumulative_total_packets, cumulative_protocol_counter, cumulative_protocol_fractions, cumulative_message_type_counter, cumulative_message_type_fractions)
+    print_and_save_results(file, "Cumulative Results Across All Scenarios", cumulative_total_packets, cumulative_protocol_counter, cumulative_protocol_fractions, cumulative_message_type_counter, cumulative_message_type_fractions)
