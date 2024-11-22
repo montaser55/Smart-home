@@ -82,9 +82,9 @@ def load_data(file_path):
         return input_data, INTERARRIVAL_DATA_TYPE
     elif "Direction" in header:
         raw_data = np.genfromtxt(file_path, delimiter=',', skip_header=1, dtype=str)
-        directions = np.array([encode_direction(row[0]) for row in raw_data])  # Encode Direction column
-        packet_sizes = np.array([float(row[3]) for row in raw_data])  # Use Packet Size as float
-        input_data = np.column_stack((directions, packet_sizes))  # Combine into 2D array
+        directions = np.array([encode_direction(row[0]) for row in raw_data])
+        packet_sizes = np.array([float(row[3]) for row in raw_data])
+        input_data = np.column_stack((directions, packet_sizes))
         return input_data, PACKETSIZE_DATA_TYPE
     else:
         raise ValueError("Unknown CSV format.")
