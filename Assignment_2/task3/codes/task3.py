@@ -43,49 +43,40 @@ def compute_cumulative_representation(df):
 
 
 def generate_feature_vectors(cumulative_df, m_values, input_file_name):
-    # Ensure the output directory exists
     output_directory = "../output/feature_vectors"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    # Extract the base name without the extension
     base_name = os.path.splitext(os.path.basename(input_file_name))[0]
 
     for m in m_values:
-        # Sample m equidistant points
         indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
         sampled_features = cumulative_df.iloc[indices]
 
-        # Construct the output file name
         output_file_name = f"{base_name}_feature_vector_m_{m}.csv"
         output_file_path = os.path.join(output_directory, output_file_name)
 
-        # Save the sampled features to the output directory
         sampled_features.to_csv(output_file_path, index=False)
         print(f"Feature vector for m={m} saved to {output_file_path}")
 
 
 def plot_feature_vectors_side_by_side(cumulative_df, m_values, input_file_name):
-    # Ensure the output directory exists
     output_directory = "../output/feature_vector_plots"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    # Extract the base name without the extension
     base_name = os.path.splitext(os.path.basename(input_file_name))[0]
 
-    # Create subplots for each m value (side by side)
     num_subplots = len(m_values)
     fig, axes = plt.subplots(1, num_subplots, figsize=(8 * num_subplots, 6), sharey=True)
 
     if num_subplots == 1:
-        axes = [axes]  # Ensure axes is always iterable
+        axes = [axes]
 
     for idx, (ax, m) in enumerate(zip(axes, m_values)):
         indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
         sampled_features = cumulative_df.iloc[indices]
 
-        # Plot data on the current subplot
         ax.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], marker=".", markersize=4, label=f"m={m}")
 
         ax.set_title(f"m={m}")
@@ -96,7 +87,6 @@ def plot_feature_vectors_side_by_side(cumulative_df, m_values, input_file_name):
     plt.suptitle("Feature Vectors for Communication Flow", fontsize=16)
     plt.tight_layout()
 
-    # Save the plot to the output directory
     output_file_path = os.path.join(output_directory, f"{base_name}_feature_vectors_side_by_side.png")
     plt.savefig(output_file_path)
     print(f"Plot saved to {output_file_path}")
@@ -129,19 +119,16 @@ file_names = [
 ]
 file_paths = [f"{base_directory}/{file_name}" for file_name in file_names]
 
-# Display available files
 print("Available Files:")
 for idx, file_path in enumerate(file_names, start=1):
     print(f"{idx}: {file_path}")
 
-# User selects a file
 selected_index = int(input("Enter the number corresponding to the file you want to process: ").strip()) - 1
 
 if 0 <= selected_index < len(file_paths):
     file_path = file_paths[selected_index]
     print(f"\nSelected file: {file_path}")
 
-    # Load and process the selected file
     df = load_and_add_data(file_path)
     calculate_statistics(df)
     cumulative_df = compute_cumulative_representation(df)
