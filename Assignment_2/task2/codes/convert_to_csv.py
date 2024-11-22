@@ -69,6 +69,8 @@ def extract_zigbee_data(pcap_file):
     finally:
         capture.close()
 
+    return packet_data, interarrival_data
+
 
 
 def write_into_files(packet_data, interarrival_data, output_directory, scenario):
