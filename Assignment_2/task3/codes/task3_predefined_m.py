@@ -82,7 +82,7 @@ def plot_feature_vectors_side_by_side(cumulative_df, m_values, fp):
 
     plt.suptitle("Feature Vectors for Communication Flow", fontsize=16)
 
-    output_file_path = os.path.join(output_directory, f"{base_name}_feature_vectors_side_by_side.png")
+    output_file_path = f"{output_directory}/{base_name}_feature_vectors_side_by_side.png"
     plt.savefig(output_file_path)
     print(f"Plot saved to {output_file_path}")
 
