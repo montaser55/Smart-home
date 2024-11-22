@@ -1,4 +1,3 @@
-import os
 import time
 
 import numpy as np
@@ -51,8 +50,8 @@ def find_k_nearest_neighbors(data, sample, k):
 
 def generate_synthetic_samples(data, k, total_synthetic_samples):
     synthetic_data = []
-    samples_to_generate = total_synthetic_samples // len(data)  # Evenly distribute synthetic samples across the dataset
-    remaining_samples = total_synthetic_samples % len(data)  # Handle any remaining samples
+    samples_to_generate = total_synthetic_samples // len(data)
+    remaining_samples = total_synthetic_samples % len(data)
 
     for i, sample in enumerate(data):
         k_neighbors = find_k_nearest_neighbors(data, sample, k)
@@ -147,23 +146,3 @@ if __name__ == "__main__":
     synthetic_datasets, data_type = generate_data(input_data, data_type, args.normalization, args.k_values,
                                          args.synthetic_percentage)
     save_file(synthetic_datasets, data_type)
-
-# output_directory = "../output/synthetic_datasets/"
-# folder_path = "../dataset/csv/packet_size/"
-# for filename in os.listdir(folder_path):
-#     if filename.endswith('.csv'):
-#         input_data, data_type = load_data(folder_path + filename)
-#         synthetic_datasets, data_type = main(input_data, data_type, 'min_max', [3,5],
-#                                              100)
-#
-#         for key, synthetic_data in synthetic_datasets.items():
-#             if data_type == "inter_arrival":
-#                 np.savetxt(f"{output_directory}/interarrival_time/{filename.split('.')[0]}_{key}.csv", synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
-#                            comments="")
-#             elif data_type == "direction_packet_size":
-#                 decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
-#                 formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
-#                 output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
-#                 np.savetxt(f"{output_directory}/packet_size/{filename.split('.')[0]}_{key}.csv", output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
-#                            comments="")
-#             print(f"Saved {filename.split('.')[0]} {key}.csv")
