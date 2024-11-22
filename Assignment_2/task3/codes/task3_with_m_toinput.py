@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,55 +41,17 @@ def compute_cumulative_representation(df):
     return cumulative_df
 
 
-def generate_feature_vectors(cumulative_df, m_values, input_file_name):
-    output_directory = "../output/feature_vectors"
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+def plot_feature_vector(cumulative_df, m):
+    indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
+    sampled_features = cumulative_df.iloc[indices]
 
-    base_name = os.path.splitext(os.path.basename(input_file_name))[0]
+    plt.figure(figsize=(8, 6))
+    plt.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], marker=".", markersize=4, label=f"m={m}")
 
-    for m in m_values:
-        indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
-        sampled_features = cumulative_df.iloc[indices]
-
-        output_file_name = f"{base_name}_feature_vector_m_{m}.csv"
-        output_file_path = os.path.join(output_directory, output_file_name)
-
-        sampled_features.to_csv(output_file_path, index=False)
-        print(f"Feature vector for m={m} saved to {output_file_path}")
-
-
-def plot_feature_vectors_side_by_side(cumulative_df, m_values, input_file_name):
-    output_directory = "../output/feature_vector_plots"
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-
-    base_name = os.path.splitext(os.path.basename(input_file_name))[0]
-
-    num_subplots = len(m_values)
-    fig, axes = plt.subplots(1, num_subplots, figsize=(8 * num_subplots, 6), sharey=True)
-
-    if num_subplots == 1:
-        axes = [axes]
-
-    for idx, (ax, m) in enumerate(zip(axes, m_values)):
-        indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
-        sampled_features = cumulative_df.iloc[indices]
-
-        ax.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], marker=".", markersize=4, label=f"m={m}")
-
-        ax.set_title(f"m={m}")
-        ax.set_xlabel("Absolute Sum")
-        ax.set_ylabel("Cumulative Sum")
-        ax.legend()
-
-    plt.suptitle("Feature Vectors for Communication Flow", fontsize=16)
-    plt.tight_layout()
-
-    output_file_path = os.path.join(output_directory, f"{base_name}_feature_vectors_side_by_side.png")
-    plt.savefig(output_file_path)
-    print(f"Plot saved to {output_file_path}")
-
+    plt.title(f"Feature Vector for m={m}")
+    plt.xlabel("Absolute Sum")
+    plt.ylabel("Cumulative Sum")
+    plt.legend()
     plt.show()
 
 
@@ -133,8 +94,7 @@ if 0 <= selected_index < len(file_paths):
     calculate_statistics(df)
     cumulative_df = compute_cumulative_representation(df)
 
-    m_values = [90, 150, 200]
-    generate_feature_vectors(cumulative_df, m_values, file_path)
-    plot_feature_vectors_side_by_side(cumulative_df, m_values, file_path)
+    m = int(input("Enter the value for m (number of sampled points): ").strip())
+    plot_feature_vector(cumulative_df, m)
 else:
     print("Invalid selection. Please try again.")
