@@ -1,6 +1,4 @@
-import os
 import time
-from multiprocessing import Pool
 
 import numpy as np
 import random
@@ -43,8 +41,7 @@ def manhattan_distance(sample1, sample2):
     return np.sum(np.abs(sample1 - sample2))
 
 
-def parallel_neighbor_search(args):
-    data, sample, k = args
+def find_k_nearest_neighbors(data, sample, k):
     distances = [(i, manhattan_distance(sample, other_sample)) for i, other_sample in enumerate(data) if
                  not np.array_equal(sample, other_sample)]
     distances.sort(key=lambda x: x[1])
@@ -55,13 +52,9 @@ def generate_synthetic_samples(data, k, total_synthetic_samples):
     synthetic_data = []
     samples_to_generate = total_synthetic_samples // len(data)
     remaining_samples = total_synthetic_samples % len(data)
-    args_list = [(data, sample, k) for sample in data]
-
-    with Pool(processes=os.cpu_count()) as pool:
-        all_neighbors = pool.map(parallel_neighbor_search, args_list)
 
     for i, sample in enumerate(data):
-        k_neighbors = all_neighbors[i]
+        k_neighbors = find_k_nearest_neighbors(data, sample, k)
         for _ in range(samples_to_generate):
             neighbor = random.choice(k_neighbors)
             diff = neighbor - sample
