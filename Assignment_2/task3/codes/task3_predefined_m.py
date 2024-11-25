@@ -69,7 +69,7 @@ def plot_feature_vectors_side_by_side(cumulative_df, m_values, fp):
     if num_subplots == 1:
         axes = [axes]
 
-    for idx, (ax, m) in enumerate(zip(axes, m_values)):
+    for i, (ax, m) in enumerate(zip(axes, m_values)):
         indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
         sampled_features = cumulative_df.iloc[indices]
 
