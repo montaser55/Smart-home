@@ -94,11 +94,11 @@ def write_into_files(packet_data, interarrival_data, output_directory, scenario)
 
 
 output_directory = "../dataset/csv"
-folder_path = "../dataset/pcap/filtered_scenario_packets/"
+folder_path = "../../../Assignment_1/dataset/scenario_1/device specific packets/"
 
 for filename in os.listdir(folder_path):
     if filename.endswith('.pcapng'):
         pcap_file = folder_path + filename
         packet_data, interarrival_data = extract_zigbee_data(pcap_file)
-        scenario = filename.split(".")[0].split("_")[0]
+        scenario = filename.split(".")[0]
         write_into_files(packet_data, interarrival_data,  output_directory, scenario)
