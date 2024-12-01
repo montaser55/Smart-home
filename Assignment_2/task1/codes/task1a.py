@@ -28,7 +28,7 @@ def process_file(fp):
     capture.close()
     return protocol_count, message_type_count, total_packet
 
-def print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions):
+def  print_and_save_results(file, header, total_packets, protocol_counter, protocol_fractions, message_type_counter, message_type_fractions):
     file.write(header + "\n")
     file.write(f"Total Packets: {total_packets}\n")
     file.write(f"Protocol Counts: {protocol_counter}\n")
