@@ -1,6 +1,7 @@
 import os
 import csv
 import math
+import argparse
 
 
 def set_direction(direction):
@@ -24,8 +25,10 @@ def load_csv_data(file_path):
             data.append((packet_size, direction))
     return data
 
+
 def calculate_euclidean_distance(row1, row2):
     return math.sqrt((row1[0] - row2[0]) ** 2 + (row1[1] - row2[1]) ** 2)
+
 
 def average_distance_between_files(data1, data2):
     total_distance = 0
@@ -39,8 +42,9 @@ def average_distance_between_files(data1, data2):
     average_distance = total_distance / count if count > 0 else 0
     return average_distance
 
+
 def calculate_distances_between_all_files(folder_path, output_file):
-    print(f"\n\nCalculating Euclidean distance")
+    print(f"\nCalculating Euclidean distance...")
     csv_data = {}
     for filename in os.listdir(folder_path):
         if filename.endswith('.csv'):
@@ -58,7 +62,7 @@ def calculate_distances_between_all_files(folder_path, output_file):
                 avg_distance = average_distance_between_files(csv_data[file1], csv_data[file2])
                 writer.writerow([file1, file2, avg_distance])
 
-    print(f"\nSaved Euclidean distance in {output_file}")
+    print(f"Saved Euclidean distances in {output_file}")
     print("---------------------------------------------\n")
 
 
@@ -70,10 +74,6 @@ def count_csv_rows(folder_path):
             with open(file_path, 'r') as file:
                 reader = csv.reader(file)
                 row_count = sum(1 for row in reader) - 1
-            # if row_count <= 0:
-            #     os.remove(file_path)
-            #     print(f"Deleted {filename} (0 rows)")
-            # else:
                 csv_row_counts[file_path] = row_count
                 print(f"{filename}: {row_count} rows")
 
@@ -94,11 +94,22 @@ def count_csv_rows(folder_path):
                     writer.writerow(empty_row)
             print(f"Padded {os.path.basename(file_path)} to {max_row_count} rows")
 
-scenario = "scenario_6"
-folder_path = "/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/" + scenario
-for filename in os.listdir(folder_path):
-    if not filename.endswith('.csv'):
-        folder_path = f'/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/{scenario}/{filename}'
-        count_csv_rows(folder_path)
-        output_file = f'/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/{scenario}/average_pairwise_distances_{filename}.csv'
-        calculate_distances_between_all_files(folder_path, output_file)
+
+def main():
+    parser = argparse.ArgumentParser(description="Process CSV files to calculate Euclidean distances and pad rows.")
+    parser.add_argument("--scenario", type=str, required=True, help="Scenario folder name.")
+    parser.add_argument("--base_path", type=str, required=True, help="Base path to the main folder.")
+
+    args = parser.parse_args()
+
+    folder_path = os.path.join(args.base_path, args.scenario)
+    for filename in os.listdir(folder_path):
+        if not filename.endswith('.csv') and not filename.endswith('.png'):
+            sub_folder_path = os.path.join(folder_path, filename)
+            count_csv_rows(sub_folder_path)
+            output_file = os.path.join(folder_path, f"average_pairwise_distances_{filename}.csv")
+            calculate_distances_between_all_files(sub_folder_path, output_file)
+
+
+if __name__ == "__main__":
+    main()

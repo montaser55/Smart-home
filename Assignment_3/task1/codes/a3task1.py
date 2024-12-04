@@ -96,7 +96,7 @@ def k_fold_split(X, k_folds):
 
 
 def min_max_normal(X):
-    flat_X = np.concatenate([np.array(row) for row in X])  # Flatten sequences
+    flat_X = np.concatenate([np.array(row) for row in X])
     global_min = flat_X.min()
     global_max = flat_X.max()
     return [(np.array(row) - global_min) / (global_max - global_min) for row in X]
@@ -182,7 +182,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     return predictions, ensemble_predictions, y_test
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="K-Fold Cross-Validation for Open/Closed World Scenarios")
     parser.add_argument("--folder", type=str, required=True, help="Path to folder containing CSV files.")
     parser.add_argument("--k", type=int, required=True, help="Number of folds for cross-validation.")
@@ -190,7 +190,8 @@ if __name__ == "__main__":
                         help="Evaluation scenario: 'closed' or 'open'.")
     parser.add_argument("--foreground", type=str, required=False,
                         help="Foreground device name for the open-world scenario (e.g., 'doorsensor').")
-    parser.add_argument("--ensemble_method", choices=["random", "highest_confidence", "p1_p2_diff"], default="random", required=False,
+    parser.add_argument("--ensemble_method", choices=["random", "highest_confidence", "p1_p2_diff"], default="random",
+                        required=False,
                         help="Ensemble method: 'random', 'highest_confidence', or 'p1_p2_diff'.")
     parser.add_argument("--scaling_method", choices=["min_max", "z_score"], default="min_max", required=False,
                         help="Scaling method: 'min_max' or 'z_score'")
@@ -213,7 +214,8 @@ if __name__ == "__main__":
         y_train = [y[i] for i in train_idx]
         y_test = [y[i] for i in test_idx]
 
-        predictions, ensemble_predictions, true_labels = train_test_models(X_train, y_train, X_test, y_test, args.ensemble_method, args.scaling_method)
+        predictions, ensemble_predictions, true_labels = train_test_models(X_train, y_train, X_test, y_test,
+                                                                           args.ensemble_method, args.scaling_method)
 
         all_true_labels.extend(true_labels)
         all_ensemble_predictions.extend(ensemble_predictions)
@@ -228,3 +230,7 @@ if __name__ == "__main__":
 
     print("\n=== Averaged Ensemble Classifier Report ===")
     print(classification_report(all_true_labels, all_ensemble_predictions))
+
+
+if __name__ == "__main__":
+    main()

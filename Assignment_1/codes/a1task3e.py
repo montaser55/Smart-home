@@ -1,6 +1,6 @@
 import csv
 import os
-
+import argparse
 import matplotlib.pyplot as plt
 
 
@@ -42,18 +42,42 @@ def plot_histogram(bins, counts, save_path):
     plt.ylabel("Frequency")
     plt.title("Distribution of Euclidean Distances")
 
-    plt.xticks(range(0, int(bins[-1])+5, 5))
+    plt.xticks(range(0, int(bins[-1]) + 5, 5))
     plt.savefig(save_path, format='png', dpi=300, bbox_inches='tight')
     print(f"Histogram saved as {save_path}")
+    plt.close()
 
-for index in range(1,7):
-    scenario = f'scenario_{index}'
-    folder_path = "/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/" + scenario
-    for filename in os.listdir(folder_path):
+
+def process_scenario(scenario_folder, bin_count):
+    for filename in os.listdir(scenario_folder):
         if filename.endswith('.csv'):
-            file_path = f'/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/output/{scenario}/{filename}'
+            file_path = os.path.join(scenario_folder, filename)
             distances = load_distances(file_path)
-            bin_count = 10
             bins, counts = compute_histogram(distances, bin_count)
-            save_path = file_path.split('.')[0] + "_histogram.png"
+            save_path = os.path.splitext(file_path)[0] + "_histogram.png"
             plot_histogram(bins, counts, save_path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate histograms for Euclidean distances in CSV files.")
+    parser.add_argument(
+        "--base_path",
+        type=str,
+        required=True,
+        help="Base path to the folder containing scenario data."
+    )
+
+    args = parser.parse_args()
+
+    for index in range(1,7):
+        scenario = f'scenario_{index}'
+        scenario_folder = os.path.join(args.base_path, scenario)
+        if os.path.exists(scenario_folder):
+            print(f"Processing {scenario}...")
+            process_scenario(scenario_folder, 10)
+        else:
+            print(f"Scenario folder {scenario_folder} does not exist.")
+
+
+if __name__ == "__main__":
+    main()

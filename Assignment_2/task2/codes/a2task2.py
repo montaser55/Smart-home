@@ -131,7 +131,7 @@ def save_file(synthetic_datasets, data_type):
         print(f"Saved to {output_file}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Generate Synthetic Zigbee Network Data")
     parser.add_argument("--data_file", type=str, required=True, help="Path to input dataset (CSV format)")
     parser.add_argument("--normalization", type=str, choices=['min_max', 'z_score'], required=True,
@@ -144,5 +144,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_data, data_type = load_data(args.data_file)
     synthetic_datasets, data_type = generate_data(input_data, data_type, args.normalization, args.k_values,
-                                         args.synthetic_percentage)
+                                                  args.synthetic_percentage)
     save_file(synthetic_datasets, data_type)
+
+
+if __name__ == "__main__":
+   main()
