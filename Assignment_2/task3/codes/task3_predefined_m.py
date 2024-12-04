@@ -1,7 +1,14 @@
+# how to use:
+# python3 task3_with_m_to_input.py -- list
+# python3 task3_with_m_to_input.py --file_index 1
+
+
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+
 
 def adjust_packet_size(row):
     if row['Direction'] == 'outgoing':
@@ -89,6 +96,7 @@ def plot_feature_vectors_side_by_side(cumulative_df, m_values, fp):
     plt.show()
 
 
+# Base Directory and File Names
 base_directory = "../dataset/packet_size_and_direction"
 file_names = [
     "scenario1_doorsensor_to_coordinator.csv",
@@ -114,21 +122,40 @@ file_names = [
 ]
 file_paths = [f"{base_directory}/{file_name}" for file_name in file_names]
 
-print("Available Files:")
-for idx, file_path in enumerate(file_names, start=1):
-    print(f"{idx}: {file_path}")
+# Argument Parsing
+parser = argparse.ArgumentParser(description="Process and visualize packet size and direction data.")
+parser.add_argument('--list', action='store_true', help="List all available files with their indices.")
+parser.add_argument('--file_index', type=int, help="Index of the file to process (1-based index).")
 
-selected_index = int(input("Enter the number corresponding to the file you want to process: ").strip()) - 1
+args = parser.parse_args()
 
+# Handle --list
+if args.list:
+    print("\nAvailable Files:")
+    for idx, file_name in enumerate(file_names, start=1):
+        print(f"{idx}: {file_name}")
+    exit()
+
+# Validate File Index
+if args.file_index is None:
+    print("Error: --file_index is required unless using --list.")
+    parser.print_help()
+    exit()
+
+selected_index = args.file_index - 1
 if 0 <= selected_index < len(file_paths):
     file_path = file_paths[selected_index]
     print(f"\nSelected file: {file_path}")
 
+    # Predefined m values
+    m_values = [90, 150, 200]
+
+    # Load and process data
     df = load_and_add_data(file_path)
     calculate_statistics(df)
     cumulative_df = compute_cumulative_representation(df)
-    m_values = [90, 150, 200]
     generate_feature_vectors(cumulative_df, m_values, file_path)
     plot_feature_vectors_side_by_side(cumulative_df, m_values, file_path)
 else:
-    print("Invalid selection. Please try again.")
+    print("Invalid file index. Use --list to see available files.")
+    exit()

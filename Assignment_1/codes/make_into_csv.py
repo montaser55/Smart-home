@@ -38,7 +38,7 @@ def process_segment(segment_file, device_name, mac_addresses, directory_name, sc
 
     capture.close()
 
-    scenario_path = f'scenari_{scenario_number}/{directory_name}/'
+    scenario_path = f'scenario_{scenario_number}/{directory_name}/'
     full_output_directory = os.path.join(output_directory, scenario_path)
     output_file = os.path.join(full_output_directory, f"{os.path.splitext(os.path.basename(segment_file))[0]}.csv")
 
@@ -51,7 +51,6 @@ def process_segment(segment_file, device_name, mac_addresses, directory_name, sc
 
     print(f"Processed {segment_file} and saved to {output_file}")
 
-# Argument parsing
 parser = argparse.ArgumentParser(description="Process Zigbee network traffic data.")
 parser.add_argument('--scenario', required=True, type=int, help="Scenario number (e.g., 1, 2, etc.)")
 parser.add_argument('--start', type=int, default=1, help="Start index of the pcapng files (default: 1).")
@@ -63,7 +62,6 @@ args = parser.parse_args()
 input_directory = f"../dataset/scenario_{args.scenario}/segmented packets"
 output_directory = f"../output/"
 
-# Iterate over devices and their MACs for the specified scenario
 for device_name, mac_addresses in DEVICE_MACS.items():
     for index in range(args.start, args.end + 1):
         segment_file = os.path.join(input_directory, f'{device_name}_segment_{index}.pcapng')

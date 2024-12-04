@@ -1,8 +1,12 @@
+# how to use:
+# python3 task1b1c.py --scenario 1
+
 import pyshark
 from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 os.makedirs("../output/plots", exist_ok=True)
 
@@ -139,39 +143,37 @@ scenarios = {
     "6": {"file_path": "../pcap/scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
 }
 
-print("Available Scenarios:")
-for key, value in scenarios.items():
-    print(f"Scenario {key}")
+parser = argparse.ArgumentParser(description="Process and analyze PCAP files for a selected scenario.")
+parser.add_argument('--scenario', type=str, required=True, choices=scenarios.keys(),
+                    help="Scenario number to process (e.g., 1, 2, 3, ...).")
 
-selected_scenario = input("Enter the scenario number to process: ").strip()
+args = parser.parse_args()
+selected_scenario = args.scenario
 
-if selected_scenario in scenarios:
-    scenario = scenarios[selected_scenario]
-    file_path = scenario["file_path"]
-    device_addresses = scenario["device_addresses"]
-    motion_sensor_addresses = scenario.get("motion_sensor_addresses", None)
+scenario = scenarios[selected_scenario]
+file_path = scenario["file_path"]
+device_addresses = scenario["device_addresses"]
+motion_sensor_addresses = scenario.get("motion_sensor_addresses", None)
 
-    print(f"\nProcessing Scenario {selected_scenario}\n")
+# Processing
+print(f"\nProcessing Scenario {selected_scenario}\n")
 
-    packet_lengths = defaultdict(list)
-    inter_arrival_times = defaultdict(lambda: defaultdict(list))
-    previous_timestamps = {}
+packet_lengths = defaultdict(list)
+inter_arrival_times = defaultdict(lambda: defaultdict(list))
+previous_timestamps = {}
 
-    capture = pyshark.FileCapture(file_path)
+capture = pyshark.FileCapture(file_path)
 
-    for packet in capture:
-        try:
-            process_packet_lengths(packet, packet_lengths)
-            process_inter_arrival_times(packet, device_addresses, previous_timestamps, inter_arrival_times, motion_sensor_addresses)
-        except AttributeError:
-            continue
+for packet in capture:
+    try:
+        process_packet_lengths(packet, packet_lengths)
+        process_inter_arrival_times(packet, device_addresses, previous_timestamps, inter_arrival_times, motion_sensor_addresses)
+    except AttributeError:
+        continue
 
-    capture.close()
+capture.close()
 
-    print_packet_length_statistics(packet_lengths)
-    print_inter_arrival_time_statistics(inter_arrival_times)
-    plot_cdf(packet_lengths, selected_scenario)
-    plot_ccdf(inter_arrival_times, selected_scenario)
-
-else:
-    print("Invalid scenario number. Please try again.")
+print_packet_length_statistics(packet_lengths)
+print_inter_arrival_time_statistics(inter_arrival_times)
+plot_cdf(packet_lengths, selected_scenario)
+plot_ccdf(inter_arrival_times, selected_scenario)

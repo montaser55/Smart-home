@@ -1,6 +1,13 @@
+# how to use:
+# python3 task3_with_m_to_input.py -- list
+# python3 task3_with_m_to_input.py --file_index 1 --m 10
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import sys
+
 
 def adjust_packet_size(row):
     if row['Direction'] == 'outgoing':
@@ -80,12 +87,25 @@ file_names = [
 ]
 file_paths = [f"{base_directory}/{file_name}" for file_name in file_names]
 
-print("Available Files:")
-for idx, file_path in enumerate(file_names, start=1):
-    print(f"{idx}: {file_path}")
+parser = argparse.ArgumentParser(description="Process and visualize packet size and direction data.")
+parser.add_argument('--list', action='store_true', help="List all available files with their indices.")
+parser.add_argument('--file_index', type=int, help="Index of the file to process (1-based index).")
+parser.add_argument('--m', type=int, help="Value for m (number of sampled points).")
 
-selected_index = int(input("Enter the number corresponding to the file you want to process: ").strip()) - 1
+args = parser.parse_args()
 
+if args.list:
+    print("\nAvailable Files:")
+    for idx, file_name in enumerate(file_names, start=1):
+        print(f"{idx}: {file_name}")
+    sys.exit(0)
+
+if args.file_index is None or args.m is None:
+    print("Error: Both --file_index and --m are required unless using --list.")
+    parser.print_help()
+    sys.exit(1)
+
+selected_index = args.file_index - 1
 if 0 <= selected_index < len(file_paths):
     file_path = file_paths[selected_index]
     print(f"\nSelected file: {file_path}")
@@ -94,7 +114,7 @@ if 0 <= selected_index < len(file_paths):
     calculate_statistics(df)
     cumulative_df = compute_cumulative_representation(df)
 
-    m = int(input("Enter the value for m (number of sampled points): ").strip())
-    plot_feature_vector(cumulative_df, m)
+    plot_feature_vector(cumulative_df, args.m)
 else:
-    print("Invalid selection. Please try again.")
+    print("Invalid file index. Use --list to see available files.")
+    sys.exit(1)
