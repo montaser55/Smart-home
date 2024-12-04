@@ -40,6 +40,6 @@ def process_segment(segment_file, device_mac, directory_name, coordinator_mac="0
 
 for index in range(1, 49):
     process_segment(f'../segmented packets/ledvance_segment_{index}.pcapng', ["0xcf6c"], "ledvance")
-    process_segment(f'../segmented packets/doorsensor_segment_{index}.pcapng', ["0xe6c4"], "doorsensor")
+    process_segment(f'../segmented packets/frientdoorsensor_segment_{index}.pcapng', ["0xe6c4"], "frientdoorsensor")
     process_segment(f'../segmented packets/motionsensor_segment_{index}.pcapng', ["0xd0b9","0xdc52","0xb547","0xacba","0xdd43"],"motionsensor")
 

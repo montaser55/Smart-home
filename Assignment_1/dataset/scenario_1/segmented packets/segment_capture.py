@@ -15,6 +15,7 @@ def segment_file(input_file, device_name):
     while start_time < capture_duration:
         end_time = start_time + segment_duration
         segment_filename = f"{device_name}_segment_{segment_number}.pcapng"
+
         command = [
             "tshark", "-r", input_file,
             "-Y", f"frame.time_relative >= {start_time} && frame.time_relative < {end_time}",
@@ -25,6 +26,6 @@ def segment_file(input_file, device_name):
         start_time = end_time
         segment_number += 1
 
-segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/ledvance_to_coordinator.pcapng', 'ledvance')
-segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/scenario1_doorsensor_to_coordinator.pcapng', 'doorsensor')
-segment_file('/Users/montasermajid/Documents/Btu Cottbus/Smart-home/Assisgnmet_1/dataset/scenario_1/device specific packets/scenario1_osarm_to_coordinator.pcapng', 'osarm')
+segment_file('../device specific packets/ledvance_to_coordinator.pcapng', 'ledvance')
+segment_file('../device specific packets/nedisdoorsensor_to_coordinator.pcapng', 'nedisdoorsensor')
+segment_file('../device specific packets/osarm_to_coordinator.pcapng', 'osarm')
