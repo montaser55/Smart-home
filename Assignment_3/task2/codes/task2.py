@@ -6,7 +6,6 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, BatchNormalization, ReLU, Dropout, Dense, Flatten, Input, Activation, MaxPooling1D
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
 
@@ -128,7 +127,6 @@ if args.preprocess:
     preprocess_csv_files(args.main_folder)
 
 flows, labels, folder_to_class = load_data(args.main_folder, args.m, args.n, args.include_features)
-
 train_flows, test_flows, train_labels, test_labels = train_test_split(flows, labels, test_size=args.test_split, stratify=np.argmax(labels, axis=1), random_state=42)
 
 train_flows = np.tile(train_flows, (6, 1, 1))
@@ -154,4 +152,4 @@ print("Folder to Class Mapping:")
 for folder, class_idx in folder_to_class.items():
     print(f"{folder}: Class {class_idx}")
 
-# model.summary()
+model.summary()
