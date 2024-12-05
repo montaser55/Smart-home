@@ -34,7 +34,9 @@ def read_dataset(folder_path):
                 data = []
                 for row in reader:
                     row_str = ','.join(row).strip()
+                    print(f"row: {row}, \n row_str: {row_str}")
                     row_str = transform_data(row_str)
+                    print(f"transformed_row_str: {row_str}")
                     if row_str.startswith("[") and row_str.endswith("]"):
                         try:
                             parsed_row = eval(row_str)
@@ -198,7 +200,9 @@ def main():
     args = parser.parse_args()
 
     dataset = read_dataset(args.folder)
+    print(f"dataset : {dataset}")
     labeled_dataset, label_mapping = add_label(dataset, args.scenario, args.foreground)
+    print(f"labeled_dataset : {labeled_dataset}")
 
     X, y = generate_dataset(labeled_dataset)
     all_true_labels = []

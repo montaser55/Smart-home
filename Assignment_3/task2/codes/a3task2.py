@@ -72,7 +72,6 @@ def load_data(main_folder, m, n, include_features=True):
 
                 flows.append(padded_data)
                 labels.append(folder_to_class[folder])
-
     flows = np.array(flows, dtype=np.float32)
     labels = tf.keras.utils.to_categorical(labels, num_classes=class_idx).astype(np.float32)
     return flows, labels, folder_to_class
