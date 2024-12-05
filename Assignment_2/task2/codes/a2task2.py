@@ -102,6 +102,8 @@ def generate_data(input_data, data_type, normalization_method, k_values, synthet
     else:
         raise ValueError("Invalid normalization method specified.")
 
+    print(f"Synthetic data generation started.")
+
     start_time = time.time()
     total_synthetic_samples = int(synthetic_sample_percentage * len(data) / 100)
     synthetic_datasets = {}
@@ -113,19 +115,19 @@ def generate_data(input_data, data_type, normalization_method, k_values, synthet
     return synthetic_datasets, data_type
 
 
-def save_file(synthetic_datasets, data_type):
-    output_directory = "../output/"
+def save_file(synthetic_datasets, data_type, output_path):
+    output_directory = output_path
     output_file = ""
     for key, synthetic_data in synthetic_datasets.items():
         if data_type == INTERARRIVAL_DATA_TYPE:
-            output_file = f"{output_directory}/interarrival_{key}.csv"
+            output_file = f"{output_directory}interarrival_{key}.csv"
             np.savetxt(output_file, synthetic_data, delimiter=',', fmt='%f', header="Inter-Arrival Time",
                        comments="")
         elif data_type == PACKETSIZE_DATA_TYPE:
             decoded_directions = [decode_direction(int(round(val[0]))) for val in synthetic_data]
             formatted_packet_sizes = [f"{val[1]:.5f}" for val in synthetic_data]
             output_data = np.column_stack((decoded_directions, formatted_packet_sizes))
-            output_file = f"{output_directory}/packet_size_{key}.csv"
+            output_file = f"{output_directory}packet_size_{key}.csv"
             np.savetxt(output_file, output_data, delimiter=',', fmt='%s', header="Direction,Packet Size",
                        comments="")
         print(f"Saved to {output_file}")
@@ -140,12 +142,13 @@ def main():
                         help="List of k values for nearest neighbors")
     parser.add_argument("--synthetic_percentage", type=int, default=100,
                         help="Percentage of synthetic samples relative to the real dataset size")
+    parser.add_argument("--output_path", type=str, required=True, help="Path for output")
 
     args = parser.parse_args()
     input_data, data_type = load_data(args.data_file)
     synthetic_datasets, data_type = generate_data(input_data, data_type, args.normalization, args.k_values,
                                                   args.synthetic_percentage)
-    save_file(synthetic_datasets, data_type)
+    save_file(synthetic_datasets, data_type, args.output_path)
 
 
 if __name__ == "__main__":

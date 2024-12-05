@@ -110,46 +110,49 @@ def build_cnn(input_shape, num_classes):
 
     return model
 
+def main():
+    parser = argparse.ArgumentParser(description="Deep Learning Classifier for Flows")
+    parser.add_argument("--main_folder", type=str, required=True, help="Path to the main folder containing device folders.")
+    parser.add_argument("--m", type=int, default=48, help="Number of flows to take from each folder (max 48).")
+    parser.add_argument("--n", type=int, required=True, help="Number of lines (packet sizes) to take from each flow.")
+    parser.add_argument("--include_features", action="store_true", help="Include cumulative features (default: enabled).")
+    parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs.")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
+    parser.add_argument("--test_split", type=float, default=0.1, help="Proportion of test dataset.")
+    parser.add_argument("--val_split", type=float, default=0.1, help="Proportion of validation dataset.")
+    parser.add_argument("--preprocess", action="store_true", help="Run preprocessing on CSV files.")
+    args = parser.parse_args()
 
-parser = argparse.ArgumentParser(description="Deep Learning Classifier for Flows")
-parser.add_argument("--main_folder", type=str, required=True, help="Path to the main folder containing device folders.")
-parser.add_argument("--m", type=int, default=48, help="Number of flows to take from each folder (max 48).")
-parser.add_argument("--n", type=int, required=True, help="Number of lines (packet sizes) to take from each flow.")
-parser.add_argument("--include_features", action="store_true", help="Include cumulative features (default: enabled).")
-parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs.")
-parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
-parser.add_argument("--test_split", type=float, default=0.1, help="Proportion of test dataset.")
-parser.add_argument("--val_split", type=float, default=0.1, help="Proportion of validation dataset.")
-parser.add_argument("--preprocess", action="store_true", help="Run preprocessing on CSV files.")
-args = parser.parse_args()
+    if args.preprocess:
+        preprocess_csv_files(args.main_folder)
 
-if args.preprocess:
-    preprocess_csv_files(args.main_folder)
+    flows, labels, folder_to_class = load_data(args.main_folder, args.m, args.n, args.include_features)
+    train_flows, test_flows, train_labels, test_labels = train_test_split(flows, labels, test_size=args.test_split, stratify=np.argmax(labels, axis=1), random_state=42)
 
-flows, labels, folder_to_class = load_data(args.main_folder, args.m, args.n, args.include_features)
-train_flows, test_flows, train_labels, test_labels = train_test_split(flows, labels, test_size=args.test_split, stratify=np.argmax(labels, axis=1), random_state=42)
+    train_flows = np.tile(train_flows, (6, 1, 1))
+    train_labels = np.tile(train_labels, (6, 1))
 
-train_flows = np.tile(train_flows, (6, 1, 1))
-train_labels = np.tile(train_labels, (6, 1))
+    input_shape = train_flows.shape[1:]
+    model = build_cnn(input_shape, len(folder_to_class))
+    model.fit(train_flows, train_labels, epochs=args.epochs, batch_size=args.batch_size, validation_split=args.val_split)
 
-input_shape = train_flows.shape[1:]
-model = build_cnn(input_shape, len(folder_to_class))
-model.fit(train_flows, train_labels, epochs=args.epochs, batch_size=args.batch_size, validation_split=args.val_split)
+    print("\n")
+    y_prediction = model.predict(test_flows)
+    y_prediction_classes = np.argmax(y_prediction, axis=1)
+    y_true_classes = np.argmax(test_labels, axis=1)
+    print(y_prediction_classes, "predicted classes")
+    print(y_true_classes, "true classes")
 
-print("\n")
-y_prediction = model.predict(test_flows)
-y_prediction_classes = np.argmax(y_prediction, axis=1)
-y_true_classes = np.argmax(test_labels, axis=1)
-print(y_prediction_classes, "predicted classes")
-print(y_true_classes, "true classes")
+    print("\n")
+    cm = confusion_matrix(y_true_classes, y_prediction_classes)
+    print("Confusion Matrix:\n", cm)
 
-print("\n")
-cm = confusion_matrix(y_true_classes, y_prediction_classes)
-print("Confusion Matrix:\n", cm)
+    print("\n")
+    print("Folder to Class Mapping:")
+    for folder, class_idx in folder_to_class.items():
+        print(f"{folder}: Class {class_idx}")
 
-print("\n")
-print("Folder to Class Mapping:")
-for folder, class_idx in folder_to_class.items():
-    print(f"{folder}: Class {class_idx}")
+    model.summary()
 
-model.summary()
+if __name__ == "__main__":
+    main()

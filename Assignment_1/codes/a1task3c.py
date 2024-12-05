@@ -51,21 +51,27 @@ def process_segment(segment_file, device_name, mac_addresses, directory_name, sc
 
     print(f"Processed {segment_file} and saved to {output_file}")
 
-parser = argparse.ArgumentParser(description="Process Zigbee network traffic data.")
-parser.add_argument('--scenario', required=True, type=int, help="Scenario number (e.g., 1, 2, etc.)")
-parser.add_argument('--start', type=int, default=1, help="Start index of the pcapng files (default: 1).")
-parser.add_argument('--end', type=int, default=48, help="End index of the pcapng files (default: 48).")
-parser.add_argument('--coordinator_mac', default="0x0000", help="Coordinator MAC address (default: 0x0000).")
+def main():
+    parser = argparse.ArgumentParser(description="Process Zigbee network traffic data.")
+    parser.add_argument('--base_directory', type=str, required=True, help="Base directory.")
+    parser.add_argument('--scenario', required=True, type=int, help="Scenario number (e.g., 1, 2, etc.)")
+    parser.add_argument('--start', type=int, default=1, help="Start index of the pcapng files (default: 1).")
+    parser.add_argument('--end', type=int, default=48, help="End index of the pcapng files (default: 48).")
+    parser.add_argument('--coordinator_mac', default="0x0000", help="Coordinator MAC address (default: 0x0000).")
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-input_directory = f"../dataset/scenario_{args.scenario}/segmented packets"
-output_directory = f"../output/"
+    input_directory = f"{args.base_directory}/dataset/scenario_{args.scenario}/segmented packets"
+    output_directory = f"{args.base_directory}/output/"
 
-for device_name, mac_addresses in DEVICE_MACS.items():
-    for index in range(args.start, args.end + 1):
-        segment_file = os.path.join(input_directory, f'{device_name}_segment_{index}.pcapng')
-        if os.path.exists(segment_file):
-            process_segment(segment_file, device_name, mac_addresses, device_name, args.scenario, output_directory, args.coordinator_mac)
-        else:
-            print(f"File not found: {segment_file}")
+    for device_name, mac_addresses in DEVICE_MACS.items():
+        for index in range(args.start, args.end + 1):
+            segment_file = os.path.join(input_directory, f'{device_name}_segment_{index}.pcapng')
+            if os.path.exists(segment_file):
+                process_segment(segment_file, device_name, mac_addresses, device_name, args.scenario, output_directory, args.coordinator_mac)
+            else:
+                print(f"File not found: {segment_file}")
+
+
+if __name__ == "__main__":
+    main()

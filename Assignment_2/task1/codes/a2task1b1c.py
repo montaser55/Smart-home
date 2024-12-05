@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 
-os.makedirs("../output/plots", exist_ok=True)
+# os.makedirs("../output/plots", exist_ok=True)
 
 def process_packet_lengths(packet, packet_lengths):
 
@@ -68,7 +68,7 @@ def print_inter_arrival_time_statistics(inter_arrival_times):
             print(f"Median Inter-Arrival Time: {median_time:.4f} seconds")
 
 
-def plot_cdf(packet_lengths, scenario_name):
+def plot_cdf(packet_lengths, scenario_name, output_path):
     plt.figure(figsize=(12, 8))
 
     all_packet_sizes = []
@@ -94,11 +94,11 @@ def plot_cdf(packet_lengths, scenario_name):
     plt.ylabel('Cumulative Probability')
     plt.legend(title="Protocols", loc='lower right')
     plt.grid(True)
-    plt.savefig(f"../output/plots/scenario_{scenario_name}_packet_sizes_cdf.png")
+    plt.savefig(f"{output_path}/output/plots/scenario_{scenario_name}_packet_sizes_cdf.png")
     plt.show()
 
 
-def plot_ccdf(inter_arrival_times, scenario_name):
+def plot_ccdf(inter_arrival_times, scenario_name, output_path):
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [2, 1]}, figsize=(14, 6))
 
     for protocol, pairs in inter_arrival_times.items():
@@ -126,54 +126,64 @@ def plot_ccdf(inter_arrival_times, scenario_name):
 
     ax1.legend(loc="upper left", fontsize=8, title="Protocols and Pairs")
     plt.tight_layout()
-    plt.savefig(f"../output/plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
+    plt.savefig(f"{output_path}/output/plots/scenario_{scenario_name}_inter_arrival_times_ccdf.png")
     plt.show()
 
+def main():
 
-scenarios = {
-    "1": {"file_path": "../pcap/scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
-    "2": {"file_path": "../pcap/scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
-    "3": {
-        "file_path": "../pcap/scenario3.pcapng",
-        "device_addresses": {"0xe6c4", "0xcf6c", "0x0000", "MotionSensor"},
-        "motion_sensor_addresses": {"0xd0b9", "0xdc52", "0xb547", "0xacba", "0xdd43"}
-    },
-    "4": {"file_path": "../pcap/scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "5": {"file_path": "../pcap/scenario5.pcapng", "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
-    "6": {"file_path": "../pcap/scenario6.pcapng", "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
-}
 
-parser = argparse.ArgumentParser(description="Process and analyze PCAP files for a selected scenario.")
-parser.add_argument('--scenario', type=str, required=True, choices=scenarios.keys(),
-                    help="Scenario number to process (e.g., 1, 2, 3, ...).")
+    parser = argparse.ArgumentParser(description="Process and analyze PCAP files for a selected scenario.")
+    parser.add_argument('--base_directory', type=str, required=True, help="Base directory containing the PCAP files.")
+    parser.add_argument('--scenario', type=str, required=True, choices=["1","2","3","4","5","6"],
+                        help="Scenario number to process (e.g., 1, 2, 3, ...).")
 
-args = parser.parse_args()
-selected_scenario = args.scenario
+    args = parser.parse_args()
+    selected_scenario = args.scenario
 
-scenario = scenarios[selected_scenario]
-file_path = scenario["file_path"]
-device_addresses = scenario["device_addresses"]
-motion_sensor_addresses = scenario.get("motion_sensor_addresses", None)
+    scenarios = {
+        "1": {"file_path": f"{args.base_directory}/pcap/scenario1.pcapng", "device_addresses": {"0x7290", "0xcf6c", "0x8b7c", "0x0000"}},
+        "2": {"file_path": f"{args.base_directory}/pcap/scenario2.pcapng", "device_addresses": {"0xe7fb", "0xcf6c", "0x8b7c", "0x0000"}},
+        "3": {
+            "file_path": f"{args.base_directory}/pcap/scenario3.pcapng",
+            "device_addresses": {"0xe6c4", "0xcf6c", "0x0000", "MotionSensor"},
+            "motion_sensor_addresses": {"0xd0b9", "0xdc52", "0xb547", "0xacba", "0xdd43"}
+        },
+        "4": {"file_path": f"{args.base_directory}/pcap/scenario4.pcapng", "device_addresses": {"0xd0b9", "0xcf6c", "0x8b7c", "0x0000"}},
+        "5": {"file_path": f"{args.base_directory}/pcap/scenario5.pcapng",
+              "device_addresses": {"0xdd43", "0x6ef9", "0xcf6c", "0x8b7c", "0x0000"}},
+        "6": {"file_path": f"{args.base_directory}/pcap/scenario6.pcapng",
+              "device_addresses": {"0x7290", "0xe6c4", "0xcf6c", "0x8b7c", "0x0000"}}
+    }
 
-# Processing
-print(f"\nProcessing Scenario {selected_scenario}\n")
 
-packet_lengths = defaultdict(list)
-inter_arrival_times = defaultdict(lambda: defaultdict(list))
-previous_timestamps = {}
+    scenario = scenarios[selected_scenario]
+    file_path = scenario["file_path"]
+    device_addresses = scenario["device_addresses"]
+    motion_sensor_addresses = scenario.get("motion_sensor_addresses", None)
 
-capture = pyshark.FileCapture(file_path)
+    # Processing
+    print(f"\nProcessing Scenario {selected_scenario}\n")
 
-for packet in capture:
-    try:
-        process_packet_lengths(packet, packet_lengths)
-        process_inter_arrival_times(packet, device_addresses, previous_timestamps, inter_arrival_times, motion_sensor_addresses)
-    except AttributeError:
-        continue
+    packet_lengths = defaultdict(list)
+    inter_arrival_times = defaultdict(lambda: defaultdict(list))
+    previous_timestamps = {}
 
-capture.close()
+    capture = pyshark.FileCapture(file_path)
 
-print_packet_length_statistics(packet_lengths)
-print_inter_arrival_time_statistics(inter_arrival_times)
-plot_cdf(packet_lengths, selected_scenario)
-plot_ccdf(inter_arrival_times, selected_scenario)
+    for packet in capture:
+        try:
+            process_packet_lengths(packet, packet_lengths)
+            process_inter_arrival_times(packet, device_addresses, previous_timestamps, inter_arrival_times, motion_sensor_addresses)
+        except AttributeError:
+            continue
+
+    capture.close()
+
+    print_packet_length_statistics(packet_lengths)
+    print_inter_arrival_time_statistics(inter_arrival_times)
+    plot_cdf(packet_lengths, selected_scenario, args.base_directory)
+    plot_ccdf(inter_arrival_times, selected_scenario, args.base_directory)
+
+
+if __name__ == "__main__":
+    main()
