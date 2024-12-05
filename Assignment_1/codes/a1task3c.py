@@ -1,6 +1,3 @@
-# how to use:
-# python3 make_into_csv.py --scenario 6
-
 import pyshark
 import csv
 import os

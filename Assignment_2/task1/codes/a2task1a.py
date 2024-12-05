@@ -1,6 +1,3 @@
-# how to use:
-# python3 task1a.py
-
 import pyshark
 from collections import Counter
 import argparse

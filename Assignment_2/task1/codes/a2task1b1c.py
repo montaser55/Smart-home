@@ -1,6 +1,3 @@
-# how to use:
-# python3 task1b1c.py --scenario 1
-
 import pyshark
 from collections import defaultdict
 import numpy as np

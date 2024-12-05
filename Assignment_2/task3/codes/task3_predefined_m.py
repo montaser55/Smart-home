@@ -1,8 +1,3 @@
-# how to use:
-# python3 task3_with_m_to_input.py -- list
-# python3 task3_with_m_to_input.py --file_index 1
-
-
 import os
 import pandas as pd
 import numpy as np
