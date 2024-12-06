@@ -133,6 +133,7 @@ def main():
 
     input_shape = train_flows.shape[1:]
     model = build_cnn(input_shape, len(folder_to_class))
+    # model.summary()
     model.fit(train_flows, train_labels, epochs=args.epochs, batch_size=args.batch_size, validation_split=args.val_split)
 
     print("\n")
@@ -150,8 +151,6 @@ def main():
     print("Folder to Class Mapping:")
     for folder, class_idx in folder_to_class.items():
         print(f"{folder}: Class {class_idx}")
-
-    model.summary()
 
 if __name__ == "__main__":
     main()
