@@ -106,6 +106,7 @@ def k_fold_split(X, y, k_folds):
         for i in range(k_folds):
             end = start + fold_size + (1 if i < remainder else 0)
             folds[i].extend(indices[start:end])
+            print(f'start: {start}, end: {end}')
             start = end
     print(f'folds: {folds}')
 
@@ -117,6 +118,33 @@ def k_fold_split(X, y, k_folds):
     print(f'train_test_splits: {train_test_splits}')
     return train_test_splits
 
+def manual_grid_search(classifier, param_grid, X_train, y_train, X_val, y_val, scaling_method=None):
+    best_params = None
+    best_score = -1
+
+    from itertools import product
+    param_combinations = list(product(*param_grid.values()))
+
+    X_train_padded, X_val_padded = pad_sequences(X_train, X_val)
+    if scaling_method:
+        X_train_normalized = normalize_dataset(X_train_padded, scaling_method)
+        X_val_normalized = normalize_dataset(X_val_padded, scaling_method)
+    else:
+        X_train_normalized, X_val_normalized = X_train_padded, X_val_padded
+
+    for params in param_combinations:
+        param_dict = dict(zip(param_grid.keys(), params))
+        clf = classifier(**param_dict)
+
+        clf.fit(X_train_normalized, y_train)
+        val_predictions = clf.predict(X_val_normalized)
+        val_score = np.mean(val_predictions == y_val)
+
+        if val_score > best_score:
+            best_score = val_score
+            best_params = param_dict
+
+    return best_params, best_score
 
 def min_max_normal(X):
     flat_X = np.concatenate([np.array(row) for row in X])
@@ -152,18 +180,36 @@ def pad_sequences(sequence1, sequence2):
 
 def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
     classifiers = {
-        "SVM": SVC(probability=True),
-        "k-NN": KNeighborsClassifier(metric='manhattan'),
-        "Random Forest": RandomForestClassifier()
+        "SVM": (SVC, {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"], "probability": [True]}),
+        "k-NN": (KNeighborsClassifier, {"n_neighbors": [3, 5, 7], "metric": ["euclidean", "manhattan"]}),
+        "Random Forest": (RandomForestClassifier, {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
     }
 
     predictions = {}
     confidences = {}
 
+    split_idx = int(0.8 * len(X_train))
+    X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
+    y_train_split, y_val_split = y_train[:split_idx], y_train[split_idx:]
+
     X_train_padded, X_test_padded = pad_sequences(X_train, X_test)
 
-    for name, clf in classifiers.items():
-        if name in ["SVM", "k-NN"]:
+    for name, (clf_class, param_grid) in classifiers.items():
+        print(f"Optimizing {name}...")
+
+        best_params, best_score = manual_grid_search(
+            clf_class,
+            param_grid,
+            X_train_split,
+            y_train_split,
+            X_val_split,
+            y_val_split,
+            scaling_method if name in ["SVM", "k-NN"] else None
+        )
+        print(f"Best Parameters for {name}: {best_params}, Validation Accuracy: {best_score:.4f}")
+
+        clf = clf_class(**best_params)
+        if name in ["SVM", "k-NN"]:  # Normalize for these classifiers
             normalized_X_train = normalize_dataset(X_train_padded, scaling_method)
             normalized_X_test = normalize_dataset(X_test_padded, scaling_method)
             clf.fit(normalized_X_train, y_train)
@@ -174,7 +220,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             predictions[name] = clf.predict(X_test_padded)
             confidences[name] = clf.predict_proba(X_test_padded)
 
-
+    # Ensemble classification
     ensemble_predictions = []
     for i in range(len(X_test)):
         if ensemble_method == "random":
@@ -203,6 +249,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     print(classification_report(y_test, ensemble_predictions))
 
     return predictions, ensemble_predictions, y_test
+
 
 
 def main():
