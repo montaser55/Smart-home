@@ -138,6 +138,7 @@ def main():
 
     print("\n")
     y_prediction = model.predict(test_flows)
+    print(y_prediction)
     y_prediction_classes = np.argmax(y_prediction, axis=1)
     y_true_classes = np.argmax(test_labels, axis=1)
     print(y_prediction_classes, "predicted classes")

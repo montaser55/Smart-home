@@ -47,7 +47,7 @@ def compute_cumulative_representation(df):
 def plot_feature_vector(cumulative_df, m):
     indices = np.linspace(0, len(cumulative_df) - 1, m).astype(int)
     sampled_features = cumulative_df.iloc[indices]
-
+    print(sampled_features)
     plt.figure(figsize=(8, 6))
     plt.plot(sampled_features["AbsoluteSum"], sampled_features["CumulativeSum"], marker=".", markersize=4, label=f"m={m}")
 
