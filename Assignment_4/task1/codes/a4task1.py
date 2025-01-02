@@ -3,6 +3,7 @@ import csv
 import argparse
 import random
 import re
+import ast
 
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -11,6 +12,52 @@ from sklearn.metrics import classification_report
 import numpy as np
 from collections import defaultdict
 
+
+def parse_flow_string(flow_string):
+    direction_words = ['receive', 'incoming', 'send', 'outgoing']
+    pattern = r'(\W)(' + '|'.join(direction_words) + r')(\W)'
+    replacement = r'\1"\2"\3'
+
+    corrected = re.sub(pattern, replacement, flow_string)
+    return ast.literal_eval(corrected)
+
+
+def compute_stats_and_abs_cumulative_sums(flow_pairs):
+    incoming_packets = 0
+    outgoing_packets = 0
+    incoming_size_sum = 0
+    outgoing_size_sum = 0
+
+    cumulative_sums = []
+    running_sum = 0
+
+    for direction_str, size in flow_pairs:
+        direction = direction_str.lower().strip()
+
+        if direction in ['receive', 'incoming']:
+            incoming_packets += 1
+            incoming_size_sum += size
+        else:
+            outgoing_packets += 1
+            outgoing_size_sum += size
+
+        running_sum += size
+        cumulative_sums.append(running_sum)
+
+    stats = {
+        'incoming_packets': incoming_packets,
+        'outgoing_packets': outgoing_packets,
+        'incoming_size_sum': incoming_size_sum,
+        'outgoing_size_sum': outgoing_size_sum
+    }
+    return stats, cumulative_sums
+
+def sample_cumulative_sums(cumulative_sums, m):
+    if not cumulative_sums:
+        return [0] * m
+
+    indices = np.linspace(0, len(cumulative_sums) - 1, m).astype(int)
+    return [cumulative_sums[i] for i in indices]
 
 def transform_data(input_string):
     def replacer(match):
@@ -21,9 +68,17 @@ def transform_data(input_string):
     transformed_string = re.sub(r"\[(receive|send),\s*(\d+)\]", replacer, input_string)
     return transformed_string
 
+def generate_features(flow_string, m):
+    flow_pairs = parse_flow_string(flow_string)
+    stats, abs_sums = compute_stats_and_abs_cumulative_sums(flow_pairs)
+    sampled = sample_cumulative_sums(abs_sums, m)
+
+    stats_values = list(stats.values())
+    combined_list = stats_values + sampled
+    return str(combined_list)
 
 
-def read_dataset(folder_path):
+def read_dataset(folder_path, m):
     dataset = {}
     for file in os.listdir(folder_path):
         if file.endswith(".csv"):
@@ -35,7 +90,9 @@ def read_dataset(folder_path):
                 data = []
                 for row in reader:
                     row_str = ','.join(row).strip()
-                    row_str = transform_data(row_str)
+                    # row_str = transform_data(row_str)
+                    row_str = generate_features(row_str, m)
+
 
                     if row_str.startswith("[") and row_str.endswith("]"):
                         try:
@@ -90,12 +147,9 @@ def k_fold_split(X, y, k_folds):
     for idx, label in enumerate(y):
         label_to_indices[label].append(idx)
 
-    print(f'label_to_indices: {label_to_indices}')
-
     for label in label_to_indices:
         np.random.shuffle(label_to_indices[label])
 
-    print(f'label_to_indices_shuffled: {label_to_indices}')
 
     folds = [[] for _ in range(k_folds)]
     for label, indices in label_to_indices.items():
@@ -125,7 +179,8 @@ def manual_grid_search(classifier, param_grid, X_train, y_train, X_val, y_val, s
     from itertools import product
     param_combinations = list(product(*param_grid.values()))
 
-    X_train_padded, X_val_padded = pad_sequences(X_train, X_val)
+    # X_train_padded, X_val_padded = pad_sequences(X_train, X_val)
+    X_train_padded, X_val_padded = X_train, X_val
     if scaling_method:
         X_train_normalized = normalize_dataset(X_train_padded, scaling_method)
         X_val_normalized = normalize_dataset(X_val_padded, scaling_method)
@@ -172,11 +227,16 @@ def pad_sequences(sequence1, sequence2):
     max_len1 = max(len(seq) for seq in sequence1)
     max_len2 = max(len(seq) for seq in sequence2)
     max_len = max(max_len1, max_len2)
+
     padded_sequence1 = np.array([np.pad(seq, (0, max_len - len(seq)), constant_values=0) for seq in sequence1])
     padded_sequence2 = np.array([np.pad(seq, (0, max_len - len(seq)), constant_values=0) for seq in sequence2])
     return padded_sequence1, padded_sequence2
 
-
+def truncate_dataset(dataset, n):
+    truncated_dataset = {}
+    for key, value_list in dataset.items():
+        truncated_dataset[key] = value_list[:n]
+    return truncated_dataset
 
 def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
     classifiers = {
@@ -192,7 +252,8 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
     y_train_split, y_val_split = y_train[:split_idx], y_train[split_idx:]
 
-    X_train_padded, X_test_padded = pad_sequences(X_train, X_test)
+    # X_train_padded, X_test_padded = pad_sequences(X_train, X_test)
+    X_train_padded, X_test_padded = X_train, X_test
 
     for name, (clf_class, param_grid) in classifiers.items():
         print(f"Optimizing {name}...")
@@ -256,6 +317,8 @@ def main():
     parser = argparse.ArgumentParser(description="K-Fold Cross-Validation for Open/Closed World Scenarios")
     parser.add_argument("--folder", type=str, required=True, help="Path to folder containing CSV files.")
     parser.add_argument("--k", type=int, required=True, help="Number of folds for cross-validation.")
+    parser.add_argument("--m", type=int, required=False, default = 150, help="Number of sample points.")
+    parser.add_argument("--n", type=int, required=False, help="Number of flows to take.")
     parser.add_argument("--scenario", type=str, choices=["closed", "open"], required=True,
                         help="Evaluation scenario: 'closed' or 'open'.")
     parser.add_argument("--foreground", type=str, required=False,
@@ -267,10 +330,15 @@ def main():
                         help="Scaling method: 'min_max' or 'z_score'")
     args = parser.parse_args()
 
-    dataset = read_dataset(args.folder)
+    dataset = read_dataset(args.folder, args.m)
+    if args.n is not None:
+        dataset = truncate_dataset(dataset, args.n)
+
+    print(f"dataset: {dataset}")
     labeled_dataset, label_mapping = add_label(dataset, args.scenario, args.foreground)
 
     X, y = generate_dataset(labeled_dataset)
+
     all_true_labels = []
     all_ensemble_predictions = []
     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
