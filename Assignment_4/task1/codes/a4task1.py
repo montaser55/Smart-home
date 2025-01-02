@@ -4,6 +4,9 @@ import argparse
 import random
 import re
 import ast
+import json  # Added for Task 2 file output
+import time  # Added for runtime tracking
+import tracemalloc  # Added for memory tracking
 
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -247,6 +250,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
     predictions = {}
     confidences = {}
+    runtime_memory_logs = {name: {"train": [], "test": []} for name in classifiers}
 
     split_idx = int(0.8 * len(X_train))
     X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
@@ -254,9 +258,12 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
     # X_train_padded, X_test_padded = pad_sequences(X_train, X_test)
     X_train_padded, X_test_padded = X_train, X_test
-
     for name, (clf_class, param_grid) in classifiers.items():
         print(f"Optimizing {name}...")
+
+        # Start measuring runtime and memory for training
+        train_start_time = time.time()
+        tracemalloc.start()
 
         best_params, best_score = manual_grid_search(
             clf_class,
@@ -267,19 +274,36 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             y_val_split,
             scaling_method if name in ["SVM", "k-NN"] else None
         )
-        print(f"Best Parameters for {name}: {best_params}, Validation Accuracy: {best_score:.4f}")
-
         clf = clf_class(**best_params)
+
         if name in ["SVM", "k-NN"]:  # Normalize for these classifiers
             normalized_X_train = normalize_dataset(X_train_padded, scaling_method)
-            normalized_X_test = normalize_dataset(X_test_padded, scaling_method)
             clf.fit(normalized_X_train, y_train)
+        else:
+            clf.fit(X_train_padded, y_train)
+
+        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
+        tracemalloc.stop()
+        train_runtime = time.time() - train_start_time
+        runtime_memory_logs[name]["train"].append(
+            {"runtime_seconds": train_runtime, "memory_peak_kb": train_peak_memory})
+
+        # Start measuring runtime and memory for testing
+        test_start_time = time.time()
+        tracemalloc.start()
+
+        if name in ["SVM", "k-NN"]:
+            normalized_X_test = normalize_dataset(X_test_padded, scaling_method)
             predictions[name] = clf.predict(normalized_X_test)
             confidences[name] = clf.predict_proba(normalized_X_test)
         else:
-            clf.fit(X_train_padded, y_train)
             predictions[name] = clf.predict(X_test_padded)
             confidences[name] = clf.predict_proba(X_test_padded)
+
+        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
+        tracemalloc.stop()
+        test_runtime = time.time() - test_start_time
+        runtime_memory_logs[name]["test"].append({"runtime_seconds": test_runtime, "memory_peak_kb": test_peak_memory})
 
     # Ensemble classification
     ensemble_predictions = []
@@ -309,8 +333,32 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     print("\n=== Ensemble Classifier Report ===")
     print(classification_report(y_test, ensemble_predictions))
 
-    return predictions, ensemble_predictions, y_test
+    return predictions, ensemble_predictions, y_test, runtime_memory_logs
 
+def save_results(file_path, true_labels, individual_predictions, runtime_memory_logs):
+    """
+    Saves Task 2 data to a JSON file.
+    """
+    # Convert NumPy types to Python native types
+    def convert_to_native(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()  # Convert NumPy arrays to Python lists
+        elif isinstance(obj, np.generic):
+            return obj.item()  # Convert NumPy scalars to native Python types
+        return obj
+
+    output_data = {
+        "true_labels": [convert_to_native(label) for label in true_labels],
+        "predicted_labels": {name: [convert_to_native(pred) for pred in preds] for name, preds in individual_predictions.items()},
+        "runtime_memory_logs": {
+            name: [convert_to_native(log) for log in logs] for name, logs in runtime_memory_logs.items()
+        },
+    }
+
+    with open(file_path, "w") as f:
+        json.dump(output_data, f, indent=4)
+
+    print(f"Results saved to {file_path}")
 
 
 def main():
@@ -342,6 +390,7 @@ def main():
     all_true_labels = []
     all_ensemble_predictions = []
     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
+    all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}  # For Task 2
 
     k_folds = k_fold_split(X, y, args.k)
     for fold_index, (train_idx, test_idx) in enumerate(k_folds):
@@ -352,7 +401,7 @@ def main():
         y_train = [y[i] for i in train_idx]
         y_test = [y[i] for i in test_idx]
 
-        predictions, ensemble_predictions, true_labels = train_test_models(X_train, y_train, X_test, y_test,
+        predictions, ensemble_predictions, true_labels, runtime_memory_logs = train_test_models(X_train, y_train, X_test, y_test,
                                                                            args.ensemble_method, args.scaling_method)
 
         all_true_labels.extend(true_labels)
@@ -360,6 +409,7 @@ def main():
 
         for name in predictions:
             all_individual_predictions[name].extend(predictions[name])
+            all_runtime_memory_logs[name].append(runtime_memory_logs[name])
 
     print("\n=== Averaged Individual Classifier Reports ===")
     for name, pred_list in all_individual_predictions.items():
@@ -369,6 +419,7 @@ def main():
     print("\n=== Averaged Ensemble Classifier Report ===")
     print(classification_report(all_true_labels, all_ensemble_predictions))
 
+    save_results(f"1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
 
 if __name__ == "__main__":
     main()
