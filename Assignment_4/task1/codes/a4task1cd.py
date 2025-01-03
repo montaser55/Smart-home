@@ -521,7 +521,7 @@ def main():
     print("\n=== Averaged Ensemble Classifier Report ===")
     print(classification_report(all_true_labels, all_ensemble_predictions))
 
-    save_results(f"../output/1a_n{args.n}_synthetic_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
+    save_results(f"../output/1c_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
 
 if __name__ == "__main__":
     main()
