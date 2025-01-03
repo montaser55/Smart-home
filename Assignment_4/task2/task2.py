@@ -90,7 +90,7 @@ def plot_runtime_memory(runtime_memory_logs):
 
 
 def main():
-    json_file = "1a_n10_data.json"
+    json_file = "../task1/output/1c_n10_data.json"
     with open(json_file, 'r') as file:
         data = json.load(file)
 
