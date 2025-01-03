@@ -1,89 +1,109 @@
-import time
-import numpy as np
+import json
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn3
-from memory_profiler import memory_usage
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
+
+
+def plot_venn_diagram(true_labels, predicted_labels, title, same_wrong_label=False):
+    errors = {
+        model: set(i for i, (true, pred) in enumerate(zip(true_labels, predictions)) if true != pred)
+        for model, predictions in predicted_labels.items()
+    }
+
+    svm_errors = errors.get("SVM", set())
+    rf_errors = errors.get("Random Forest", set())
+    knn_errors = errors.get("k-NN", set())
+
+    if same_wrong_label:
+
+        only_svm = svm_errors - rf_errors - knn_errors
+        only_rf = rf_errors - svm_errors - knn_errors
+        only_knn = knn_errors - svm_errors - rf_errors
+
+        svm_rf = set(
+            idx for idx in svm_errors & rf_errors
+            if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx]
+            if idx not in knn_errors or predicted_labels["k-NN"][idx] != predicted_labels["SVM"][idx]
+        )
+
+        rf_knn = set(
+            idx for idx in rf_errors & knn_errors
+            if predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]
+            if idx not in svm_errors or predicted_labels["SVM"][idx] != predicted_labels["Random Forest"][idx]
+        )
+
+        knn_svm = set(
+            idx for idx in knn_errors & svm_errors
+            if predicted_labels["k-NN"][idx] == predicted_labels["SVM"][idx]
+            if idx not in rf_errors or predicted_labels["Random Forest"][idx] != predicted_labels["k-NN"][idx]
+        )
+
+        all_three = set(
+            idx for idx in svm_errors & rf_errors & knn_errors
+            if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]
+        )
+
+        venn3(subsets=(len(only_svm), len(only_rf), len(svm_rf), len(only_knn), len(knn_svm), len(rf_knn), len(all_three)), set_labels=("SVM", "Random Forest", "k-NN"))
+        plt.title(title)
+    else:
+        venn3((svm_errors, rf_errors, knn_errors), set_labels=("SVM", "Random Forest", "k-NN"))
+        plt.title(title)
+    plt.show()
+
+
+def plot_runtime_memory(runtime_memory_logs):
+    models = ["SVM", "Random Forest", "k-NN"]
+    training_times = []
+    testing_times = []
+    training_memory = []
+    testing_memory = []
+
+    for model in models:
+        train_logs = runtime_memory_logs[model][0]["train"]
+        test_logs = runtime_memory_logs[model][0]["test"]
+
+        training_times.append(train_logs[0]["runtime_seconds"])
+        testing_times.append(test_logs[0]["runtime_seconds"])
+        training_memory.append(train_logs[0]["memory_peak_kb"])
+        testing_memory.append(test_logs[0]["memory_peak_kb"])
+
+    x = range(len(models))
+
+    # Plot runtime
+    plt.bar(x, training_times, width=0.4, label="Training Time", align='center')
+    plt.bar(x, testing_times, width=0.4, label="Testing Time", align='edge')
+    plt.xticks(x, models)
+    plt.xlabel("Classifiers")
+    plt.ylabel("Runtime (seconds)")
+    plt.title("Runtime Comparison")
+    plt.legend()
+    plt.show()
+
+    # Plot memory usage
+    plt.bar(x, training_memory, width=0.4, label="Training Memory", align='center')
+    plt.bar(x, testing_memory, width=0.4, label="Testing Memory", align='edge')
+    plt.xticks(x, models)
+    plt.xlabel("Classifiers")
+    plt.ylabel("Memory Usage (KB)")
+    plt.title("Memory Usage Comparison")
+    plt.legend()
+    plt.show()
+
 
 def main():
-    # Define classifiers
-    classifiers = {
-        'SVM': SVC(),
-        'Random Forest': RandomForestClassifier(),
-        'k-NN': KNeighborsClassifier()
-    }
+    json_file = "1a_n10_data.json"
+    with open(json_file, 'r') as file:
+        data = json.load(file)
 
-    # Placeholder for runtime, memory, and error data
-    results = {
-        'SVM': {'errors': [], 'runtime': {'train': [], 'test': []}, 'memory': {'train': [], 'test': []}},
-        'Random Forest': {'errors': [], 'runtime': {'train': [], 'test': []}, 'memory': {'train': [], 'test': []}},
-        'k-NN': {'errors': [], 'runtime': {'train': [], 'test': []}, 'memory': {'train': [], 'test': []}}
-    }
+    true_labels = data["true_labels"]
+    predicted_labels = data["predicted_labels"]
+    runtime_memory_logs = data["runtime_memory_logs"]
 
-    # Use your dataset here (X_train, y_train, X_test, y_test)
-    # Replace the dummy data below with your actual train/test sets
-    X_train, X_test = np.random.rand(100, 20), np.random.rand(30, 20)
-    y_train, y_test = np.random.randint(0, 3, 100), np.random.randint(0, 3, 30)
+    print(f"Length of labels: {len(true_labels)}")
 
-    # Analyze each classifier
-    for clf_name, clf in classifiers.items():
-        # Measure runtime and memory during training
-        start_time = time.time()
-        mem_usage_train = memory_usage((clf.fit, (X_train, y_train)))
-        train_time = time.time() - start_time
+    plot_venn_diagram(true_labels, predicted_labels, "Classification Errors")
+    plot_venn_diagram(true_labels, predicted_labels, "Classification Errors with Same Wrong Label", same_wrong_label=True)
+    plot_runtime_memory(runtime_memory_logs)
 
-        # Measure runtime and memory during testing
-        start_time = time.time()
-        mem_usage_test = memory_usage((clf.predict, (X_test,)))
-        test_time = time.time() - start_time
 
-        # Record runtime and memory usage
-        results[clf_name]['runtime']['train'].append(train_time)
-        results[clf_name]['runtime']['test'].append(test_time)
-        results[clf_name]['memory']['train'].append(max(mem_usage_train) - min(mem_usage_train))
-        results[clf_name]['memory']['test'].append(max(mem_usage_test) - min(mem_usage_test))
-
-        # Predict and record errors
-        y_pred = clf.predict(X_test)
-        errors = np.where(y_pred != y_test)[0]
-        results[clf_name]['errors'].extend(errors)
-
-    # Step 2: Generate Venn Diagrams for Errors
-    svm_errors = set(results['SVM']['errors'])
-    rf_errors = set(results['Random Forest']['errors'])
-    knn_errors = set(results['k-NN']['errors'])
-
-    plt.figure(figsize=(10, 5))
-    venn3([svm_errors, rf_errors, knn_errors], ('SVM', 'Random Forest', 'k-NN'))
-    plt.title("Venn Diagram of Classification Errors")
-    plt.show()
-
-    # Step 3: Runtime and Memory Plots
-    # Runtime
-    train_times = [np.mean(results[clf]['runtime']['train']) for clf in classifiers]
-    test_times = [np.mean(results[clf]['runtime']['test']) for clf in classifiers]
-
-    plt.figure(figsize=(10, 5))
-    plt.bar(classifiers.keys(), train_times, alpha=0.7, label='Training Time')
-    plt.bar(classifiers.keys(), test_times, alpha=0.7, label='Testing Time')
-    plt.title("Runtime Analysis")
-    plt.ylabel("Time (seconds)")
-    plt.legend()
-    plt.show()
-
-    # Memory
-    train_memory = [np.mean(results[clf]['memory']['train']) for clf in classifiers]
-    test_memory = [np.mean(results[clf]['memory']['test']) for clf in classifiers]
-
-    plt.figure(figsize=(10, 5))
-    plt.bar(classifiers.keys(), train_memory, alpha=0.7, label='Training Memory')
-    plt.bar(classifiers.keys(), test_memory, alpha=0.7, label='Testing Memory')
-    plt.title("Memory Usage Analysis")
-    plt.ylabel("Memory Usage (MB)")
-    plt.legend()
-    plt.show()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
