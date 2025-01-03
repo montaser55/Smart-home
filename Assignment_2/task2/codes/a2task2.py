@@ -91,6 +91,8 @@ def load_data(file_path):
 
 
 def generate_data(input_data, data_type, normalization_method, k_values, synthetic_sample_percentage):
+    print(f"input_data:{input_data}")
+    print(f"input_data_shape:{input_data.shape}")
     if normalization_method == 'min_max':
         data, min_vals, max_vals = min_max_normalization(input_data)
         param1, param2 = min_vals, max_vals

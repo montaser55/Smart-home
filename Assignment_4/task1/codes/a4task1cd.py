@@ -1,3 +1,4 @@
+import math
 import os
 import csv
 import argparse
@@ -93,6 +94,7 @@ def read_dataset(folder_path, m):
                 data = []
                 for row in reader:
                     row_str = ','.join(row).strip()
+                    # row_str = transform_data(row_str)
                     row_str = generate_features(row_str, m)
 
 
@@ -144,6 +146,11 @@ def generate_dataset(dataset):
     return X, y
 
 
+def transform_to_2d_arrays(X):
+    transformed_data = [np.array(sublist, dtype=float).reshape(-1, 1) for sublist in X]
+    return transformed_data
+
+
 def k_fold_split(X, y, k_folds):
     label_to_indices = defaultdict(list)
     for idx, label in enumerate(y):
@@ -151,6 +158,7 @@ def k_fold_split(X, y, k_folds):
 
     for label in label_to_indices:
         np.random.shuffle(label_to_indices[label])
+
 
     folds = [[] for _ in range(k_folds)]
     for label, indices in label_to_indices.items():
@@ -180,6 +188,7 @@ def manual_grid_search(classifier, param_grid, X_train, y_train, X_val, y_val, s
     from itertools import product
     param_combinations = list(product(*param_grid.values()))
 
+    # X_train_padded, X_val_padded = pad_sequences(X_train, X_val)
     X_train_padded, X_val_padded = X_train, X_val
     if scaling_method:
         X_train_normalized = normalize_dataset(X_train_padded, scaling_method)
@@ -207,6 +216,7 @@ def min_max_normal(X):
     global_max = flat_X.max()
     return [(np.array(row) - global_min) / (global_max - global_min) for row in X]
 
+
 def z_score_normal(X):
     flat_X = np.concatenate([np.array(row) for row in X])
     global_mean = flat_X.mean()
@@ -222,14 +232,120 @@ def normalize_dataset(X, method):
     else:
         raise ValueError("Unsupported scaling method. Use 'min_max' or 'z_score'.")
 
-
 def truncate_dataset(dataset, n):
     truncated_dataset = {}
     for key, value_list in dataset.items():
         truncated_dataset[key] = value_list[:n]
     return truncated_dataset
 
+def min_max_normalization(data):
+    min_vals = np.min(data, axis=0)
+    max_vals = np.max(data, axis=0)
+    if min_vals == max_vals:
+        normalized_data = np.zeros_like(data)
+    else:
+        normalized_data = (data - min_vals) / (max_vals - min_vals)
+    return normalized_data, min_vals, max_vals
+
+
+def min_max_denormalization(data, min_vals, max_vals):
+    return data * (max_vals - min_vals) + min_vals
+
+
+def z_score_normalization(data):
+    mean_vals = np.mean(data, axis=0)
+    std_vals = np.std(data, axis=0)
+    normalized_data = (data - mean_vals) / std_vals
+    return normalized_data, mean_vals, std_vals
+
+
+def z_score_denormalization(data, mean_vals, std_vals):
+    return data * std_vals + mean_vals
+
+
+def manhattan_distance(sample1, sample2):
+    return np.sum(np.abs(sample1 - sample2))
+
+
+def restore_to_original_structure(arrays):
+    return [array.flatten().tolist() for array in arrays]
+
+
+def find_k_nearest_neighbors(data, sample, k):
+    distances = [(i, manhattan_distance(sample, other_sample)) for i, other_sample in enumerate(data) if
+                 not np.array_equal(sample, other_sample)]
+    distances.sort(key=lambda x: x[1])
+    return [data[i] for i, _ in distances[:k]]
+
+
+def generate_synthetic_samples(data, k, total_synthetic_samples):
+    synthetic_data = []
+    samples_to_generate = total_synthetic_samples // len(data)
+    remaining_samples = total_synthetic_samples % len(data)
+
+    for i, sample in enumerate(data):
+        k_neighbors = find_k_nearest_neighbors(data, sample, k)
+        if len(k_neighbors) == 0:
+            k_neighbors = [sample]
+        for _ in range(samples_to_generate):
+            neighbor = random.choice(k_neighbors)
+            diff = neighbor - sample
+            random_scale = random.uniform(0, 1)
+            synthetic_sample = sample + random_scale * diff
+            synthetic_data.append(synthetic_sample)
+
+        if i < remaining_samples:
+            neighbor = random.choice(k_neighbors)
+            diff = neighbor - sample
+            random_scale = random.uniform(0, 1)
+            synthetic_sample = sample + random_scale * diff
+            synthetic_data.append(synthetic_sample)
+
+    return np.array(synthetic_data)
+
+
+def generate_data(input_data, k=3, synthetic_sample_percentage=100, normalization_method="min_max"):
+    features = input_data[:4]
+    input_data = input_data[4:]
+
+    if normalization_method == 'min_max':
+        data, min_vals, max_vals = min_max_normalization(input_data)
+        param1, param2 = min_vals, max_vals
+        denormalize_fn = min_max_denormalization
+    elif normalization_method == 'z_score':
+        data, mean_vals, std_vals = z_score_normalization(input_data)
+        param1, param2 = mean_vals, std_vals
+        denormalize_fn = z_score_denormalization
+    else:
+        raise ValueError("Invalid normalization method specified.")
+
+    print(f"Synthetic data generation started.")
+
+    start_time = time.time()
+    total_synthetic_samples = int(synthetic_sample_percentage * len(data) / 100)
+
+
+    synthetic_data = generate_synthetic_samples(data, k, total_synthetic_samples)
+    synthetic_dataset = denormalize_fn(synthetic_data, param1, param2)
+    print(f"Synthetic data generation completed in {time.time() - start_time:.2f} seconds.")
+
+    synthetic_dataset = np.vstack((features, synthetic_dataset))
+
+    return synthetic_dataset
+
+def create_synthetic_dataset(dataset):
+    print(f"dataset:{dataset}\n dataset_shape:{len(dataset)}")
+    transformed_dataset = transform_to_2d_arrays(dataset)
+    print(f"transformed_dataset:{transformed_dataset}\n transformed_dataset_shape:{len(transformed_dataset)}")
+    synthetic_dataset = []
+    for _, flow in enumerate(transformed_dataset):
+        synthetic_flow = generate_data(flow)
+        synthetic_dataset.append(synthetic_flow)
+    return restore_to_original_structure(synthetic_dataset)
+
 def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
+    X_train = create_synthetic_dataset(X_train)
+    print(f"X_train:{X_train}")
     classifiers = {
         "SVM": (SVC, {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"], "probability": [True]}),
         "k-NN": (KNeighborsClassifier, {"n_neighbors": [3, 5, 7], "metric": ["euclidean", "manhattan"]}),
@@ -244,10 +360,12 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
     y_train_split, y_val_split = y_train[:split_idx], y_train[split_idx:]
 
+    # X_train_padded, X_test_padded = pad_sequences(X_train, X_test)
     X_train_padded, X_test_padded = X_train, X_test
     for name, (clf_class, param_grid) in classifiers.items():
         print(f"Optimizing {name}...")
 
+        # Start measuring runtime and memory for training
         train_start_time = time.time()
         tracemalloc.start()
 
@@ -261,9 +379,10 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             scaling_method if name in ["SVM", "k-NN"] else None
         )
         print(f"Best Parameters for {name}: {best_params}, Validation Accuracy: {best_score:.4f}")
+
         clf = clf_class(**best_params)
 
-        if name in ["SVM", "k-NN"]:
+        if name in ["SVM", "k-NN"]:  # Normalize for these classifiers
             normalized_X_train = normalize_dataset(X_train_padded, scaling_method)
             clf.fit(normalized_X_train, y_train)
         else:
@@ -275,6 +394,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
         runtime_memory_logs[name]["train"].append(
             {"runtime_seconds": train_runtime, "memory_peak_kb": train_peak_memory})
 
+        # Start measuring runtime and memory for testing
         test_start_time = time.time()
         tracemalloc.start()
 
@@ -286,11 +406,12 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             predictions[name] = clf.predict(X_test_padded)
             confidences[name] = clf.predict_proba(X_test_padded)
 
-        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
+        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
         tracemalloc.stop()
         test_runtime = time.time() - test_start_time
         runtime_memory_logs[name]["test"].append({"runtime_seconds": test_runtime, "memory_peak_kb": test_peak_memory})
 
+    # Ensemble classification
     ensemble_predictions = []
     for i in range(len(X_test)):
         if ensemble_method == "random":
@@ -322,9 +443,9 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
 def convert_to_native(obj):
     if isinstance(obj, np.ndarray):
-        return obj.tolist()
+        return obj.tolist()  # Convert NumPy arrays to Python lists
     elif isinstance(obj, np.generic):
-        return obj.item()
+        return obj.item()  # Convert NumPy scalars to native Python types
     return obj
 
 def save_results(file_path, true_labels, individual_predictions, runtime_memory_logs):
@@ -363,9 +484,11 @@ def main():
     if args.n is not None:
         dataset = truncate_dataset(dataset, args.n)
 
+    print(f"dataset: {dataset}")
     labeled_dataset, label_mapping = add_label(dataset, args.scenario, args.foreground)
 
     X, y = generate_dataset(labeled_dataset)
+
     all_true_labels = []
     all_ensemble_predictions = []
     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
@@ -398,7 +521,7 @@ def main():
     print("\n=== Averaged Ensemble Classifier Report ===")
     print(classification_report(all_true_labels, all_ensemble_predictions))
 
-    save_results(f"../output/1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
+    save_results(f"../output/1a_n{args.n}_synthetic_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
 
 if __name__ == "__main__":
     main()
