@@ -180,12 +180,11 @@ def manual_grid_search(classifier, param_grid, X_train, y_train, X_val, y_val, s
     from itertools import product
     param_combinations = list(product(*param_grid.values()))
 
-    X_train_padded, X_val_padded = X_train, X_val
     if scaling_method:
-        X_train_normalized = normalize_dataset(X_train_padded, scaling_method)
-        X_val_normalized = normalize_dataset(X_val_padded, scaling_method)
+        X_train_normalized = normalize_dataset(X_train, scaling_method)
+        X_val_normalized = normalize_dataset(X_val, scaling_method)
     else:
-        X_train_normalized, X_val_normalized = X_train_padded, X_val_padded
+        X_train_normalized, X_val_normalized = X_train, X_val
 
     for params in param_combinations:
         param_dict = dict(zip(param_grid.keys(), params))
@@ -244,7 +243,6 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
     y_train_split, y_val_split = y_train[:split_idx], y_train[split_idx:]
 
-    X_train_padded, X_test_padded = X_train, X_test
     for name, (clf_class, param_grid) in classifiers.items():
         print(f"Optimizing {name}...")
 
@@ -264,10 +262,10 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
         clf = clf_class(**best_params)
 
         if name in ["SVM", "k-NN"]:
-            normalized_X_train = normalize_dataset(X_train_padded, scaling_method)
+            normalized_X_train = normalize_dataset(X_train, scaling_method)
             clf.fit(normalized_X_train, y_train)
         else:
-            clf.fit(X_train_padded, y_train)
+            clf.fit(X_train, y_train)
 
         train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
         tracemalloc.stop()
@@ -279,12 +277,12 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
         tracemalloc.start()
 
         if name in ["SVM", "k-NN"]:
-            normalized_X_test = normalize_dataset(X_test_padded, scaling_method)
+            normalized_X_test = normalize_dataset(X_test, scaling_method)
             predictions[name] = clf.predict(normalized_X_test)
             confidences[name] = clf.predict_proba(normalized_X_test)
         else:
-            predictions[name] = clf.predict(X_test_padded)
-            confidences[name] = clf.predict_proba(X_test_padded)
+            predictions[name] = clf.predict(X_test)
+            confidences[name] = clf.predict_proba(X_test)
 
         test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
         tracemalloc.stop()
