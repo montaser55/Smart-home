@@ -8,6 +8,7 @@ import json
 import time
 import tracemalloc
 
+import matplotlib
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -15,6 +16,7 @@ from sklearn.metrics import classification_report
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
+
 
 def parse_flow_string(flow_string):
     direction_words = ['receive', 'incoming', 'send', 'outgoing']
@@ -340,62 +342,59 @@ def save_results(file_path, true_labels, individual_predictions, runtime_memory_
     print(f"Results saved to {file_path}")
 
 
-def plot_feature_importance_avg(avg_importances, classifier_name):
-    num_features = len(avg_importances)
-    indices = np.arange(num_features)
+def plot_feature_importance_avg(avg_importances, classifier_name, top_n=30):
 
-    # Sort from most important to least important
-    sorted_idx = np.argsort(avg_importances)[::-1]
-    sorted_importances = avg_importances[sorted_idx]
-
-    plt.figure(figsize=(12, 6))
-    plt.bar(range(num_features), sorted_importances, alpha=0.7, color='b')
-    plt.title(f"Average Feature Importance - {classifier_name}")
-    plt.xlabel("Feature (sorted by importance)")
-    plt.ylabel("Importance Score")
-
-
-    # (B) Or shift everything to be non-negative:
-    min_val = sorted_importances.min()
+    # 1. Sort features in descending order of importance
+    sorted_idx = np.argsort(avg_importances)[::-1]   # indices from most to least important
+    sorted_vals = avg_importances[sorted_idx]        # sorted importance values
+    if classifier_name == "k-NN":
+        print(f"avg importance: {avg_importances}")
+    # 2. (Optional) shift negative importances so the minimum becomes 0
+    min_val = sorted_vals.min()
     if min_val < 0:
-        sorted_importances = sorted_importances - min_val  # shift up so min is 0
-        plt.bar(range(num_features), sorted_importances, alpha=0.7, color='b')
+        sorted_vals = sorted_vals - min_val
 
-    # Label only top 10 / bottom 10 to reduce clutter ...
-    # < label logic as before >
-    # Sort from most important to least important
-    sorted_idx = np.argsort(avg_importances)[::-1]
-    sorted_importances = avg_importances[sorted_idx]
-    sorted_indices = indices[sorted_idx]
+    # 3. Slice out top-N and bottom-N (without reversing the bottom slice)
+    top_indices = sorted_idx[:top_n]
+    top_importances = sorted_vals[:top_n]
 
-    # Label only top 10 and bottom 10 indices
-    top_10_indices = sorted_indices[:10]
-    bottom_10_indices = sorted_indices[-10:]
-    for i in range(10):
-        # label top 10
-        idx_x = i
-        feature_index = top_10_indices[i]
-        plt.text(idx_x, sorted_importances[idx_x], str(feature_index),
-                 rotation=90, ha='center', va='bottom', fontsize=8)
+    bottom_indices = sorted_idx[-top_n:]
+    bottom_importances = sorted_vals[-top_n:]
 
-        # label bottom 10
-        idx_x = num_features - 1 - i
-        feature_index = bottom_10_indices[-1 - i]
-        plt.text(idx_x, sorted_importances[idx_x], str(feature_index),
-                 rotation=90, ha='center', va='bottom', fontsize=8)
+    # 4. Concatenate top slice + bottom slice
+    combined_indices = np.concatenate([top_indices, bottom_indices])
+    combined_importances = np.concatenate([top_importances, bottom_importances])
 
+    # 5. Plot
+    plt.figure(figsize=(12, 6))
+    x_positions = np.arange(len(combined_importances))
+    plt.bar(x_positions, combined_importances, alpha=0.7, color='b')
+    plt.title(f"Top {top_n} & Bottom {top_n} Feature Importances - {classifier_name}", fontsize=14)
+    plt.xlabel("Features", fontsize=12)
+    plt.ylabel("Importance Score", fontsize=12)
 
+    # 6. Label each bar with the original feature index
+    for i, feat_idx in enumerate(combined_indices):
+        plt.text(
+            i,
+            combined_importances[i],
+            str(feat_idx),
+            ha='center',
+            va='bottom',
+            rotation=90,
+            fontsize=9
+        )
 
     plt.tight_layout()
-    plt.savefig(f"../output/{classifier_name}_avg_feature_importance.png")
+
+    # 7. Save and close
+    out_file = f"../output/{classifier_name}_top_bottom_{top_n}.png"
+    plt.savefig(out_file)
     plt.close()
+    print(f"Saved top-bottom-{top_n} plot to '{out_file}'.")
 
 
 def train_with_subset_of_features(X_train, y_train, X_test, y_test, classifier, feature_importance, batch_size=6):
-    """
-    Train a classifier using subsets of features based on importance.
-    Returns a list of (num_features, accuracy) pairs.
-    """
     sorted_idx = np.argsort(feature_importance)[::-1]
     num_features = len(feature_importance)
     results = []
@@ -483,6 +482,7 @@ def analyze_feature_importance_fold(
                 clf, norm_X_train_np, y_train_np, n_repeats=5, random_state=42
             )
             feature_importance = result.importances_mean
+            print(f"knn_feture_importances:{feature_importance}")
 
             subset_results = train_with_subset_of_features(
                 norm_X_train_np, y_train_np, norm_X_test_np, y_test_np, clf, feature_importance
