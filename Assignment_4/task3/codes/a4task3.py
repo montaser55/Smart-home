@@ -341,19 +341,19 @@ def save_results(file_path, true_labels, individual_predictions, runtime_memory_
     print(f"Results saved to {file_path}")
 
 
-def plot_feature_importance(feature_importance, classifier_name):
+def plot_feature_importance(feature_importance, classifier_name, fold):
     """
     Plots the feature importance for the given classifier.
     """
     sorted_idx = np.argsort(feature_importance)[::-1]
     sorted_importances = feature_importance[sorted_idx]
     plt.figure(figsize=(10, 6))
-    plt.bar(range(len(sorted_importances)), sorted_importances)
+    plt.bar(range(len(sorted_importances)), feature_importance)
     plt.title(f"Feature Importance - {classifier_name}")
     plt.xlabel("Feature Index (Sorted by Importance)")
     plt.ylabel("Importance Score")
     plt.tight_layout()
-    plt.savefig(f"../output/{classifier_name}_feature_importance.png")
+    plt.savefig(f"../output/{classifier_name}_feature_importance_fold{fold}.png")
     plt.close()
     print(f"Feature importance for {classifier_name} saved as a plot.")
 
@@ -378,7 +378,7 @@ def train_with_subset_of_features(X_train, y_train, X_test, y_test, classifier, 
     return results
 
 
-def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method, classifiers):
+def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method, classifiers, fold):
     """
     Perform feature importance analysis for the classifiers.
     """
@@ -389,7 +389,7 @@ def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method,
             # Random Forest feature importances
             clf.fit(X_train, y_train)
             feature_importance = clf.feature_importances_
-            plot_feature_importance(feature_importance, name)
+            plot_feature_importance(feature_importance, name, fold)
 
             # Measure accuracy with subsets of features
             subset_results = train_with_subset_of_features(
@@ -405,7 +405,7 @@ def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method,
             normalized_X_test = normalize_dataset(X_test, scaling_method)
             rfe.fit(normalized_X_train, y_train)
             feature_importance = rfe.ranking_
-            plot_feature_importance(1 / feature_importance, name)
+            plot_feature_importance(1 / feature_importance, name, fold)
 
             # Measure accuracy with subsets of features
             subset_results = train_with_subset_of_features(
@@ -421,7 +421,7 @@ def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method,
             clf.fit(normalized_X_train, y_train)
             result = permutation_importance(clf, normalized_X_train, y_train, n_repeats=10, random_state=42)
             feature_importance = result.importances_mean
-            plot_feature_importance(feature_importance, name)
+            plot_feature_importance(feature_importance, name, fold)
 
             # Measure accuracy with subsets of features
             subset_results = train_with_subset_of_features(
@@ -469,7 +469,7 @@ def main():
         y_train = [y[i] for i in train_idx]
         y_test = [y[i] for i in test_idx]
 
-        analyze_feature_importance(X_train, y_train, X_test, y_test, args.scaling_method, classifiers)
+        analyze_feature_importance(X_train, y_train, X_test, y_test, args.scaling_method, classifiers, fold_index+1)
 
 
 if __name__ == "__main__":

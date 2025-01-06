@@ -12,8 +12,10 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
 import numpy as np
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 
 def parse_flow_string(flow_string):
@@ -340,6 +342,36 @@ def save_results(file_path, true_labels, individual_predictions, runtime_memory_
     print(f"Results saved to {file_path}")
 
 
+def plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, k, n, output_dir = "../output"):
+
+    accuracies = {}
+
+    # Calculate accuracy for each classifier
+    for name, pred_list in all_individual_predictions.items():
+        accuracy = accuracy_score(all_true_labels, pred_list)
+        accuracies[name] = accuracy
+
+    # Calculate accuracy for ensemble classifier
+    ensemble_accuracy = accuracy_score(all_true_labels, all_ensemble_predictions)
+    accuracies["Ensemble"] = ensemble_accuracy
+
+    # Plot accuracies
+    plt.figure(figsize=(10, 6))
+    plt.bar(accuracies.keys(), accuracies.values(), color= ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'] )
+    plt.xlabel("Classifiers")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy of Individual Classifiers and Ensemble Classifier")
+    plt.ylim(0, 1)  # Accuracy ranges from 0 to 1
+    for i, (name, acc) in enumerate(accuracies.items()):
+        plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center', fontsize=10)
+
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    output_path = os.path.join(output_dir, f"accuracy_plot_k{k}_n{n}_real_data.png")
+    plt.savefig(output_path)
+    plt.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="K-Fold Cross-Validation for Open/Closed World Scenarios")
     parser.add_argument("--folder", type=str, required=True, help="Path to folder containing CSV files.")
@@ -395,6 +427,7 @@ def main():
 
     print("\n=== Averaged Ensemble Classifier Report ===")
     print(classification_report(all_true_labels, all_ensemble_predictions))
+    plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, args.k, args.n)
 
     save_results(f"../output/1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
 
