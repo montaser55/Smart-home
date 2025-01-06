@@ -12,9 +12,10 @@
 - json
 - time
 - tracemalloc
-- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, classification_report)
+- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, classification_report, accuracy_score)
 - numpy
 - collections
+- matplotlib
 
 ### Task 2
 - json

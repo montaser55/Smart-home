@@ -269,7 +269,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
         else:
             clf.fit(X_train, y_train)
 
-        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
+        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
         tracemalloc.stop()
         train_runtime = time.time() - train_start_time
         runtime_memory_logs[name]["train"].append(
@@ -346,22 +346,19 @@ def plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_
 
     accuracies = {}
 
-    # Calculate accuracy for each classifier
     for name, pred_list in all_individual_predictions.items():
         accuracy = accuracy_score(all_true_labels, pred_list)
         accuracies[name] = accuracy
 
-    # Calculate accuracy for ensemble classifier
     ensemble_accuracy = accuracy_score(all_true_labels, all_ensemble_predictions)
     accuracies["Ensemble"] = ensemble_accuracy
 
-    # Plot accuracies
     plt.figure(figsize=(10, 6))
     plt.bar(accuracies.keys(), accuracies.values(), color= ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'] )
     plt.xlabel("Classifiers")
     plt.ylabel("Accuracy")
     plt.title("Accuracy of Individual Classifiers and Ensemble Classifier")
-    plt.ylim(0, 1)  # Accuracy ranges from 0 to 1
+    plt.ylim(0, 1)
     for i, (name, acc) in enumerate(accuracies.items()):
         plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center', fontsize=10)
 
@@ -399,7 +396,7 @@ def main():
     all_true_labels = []
     all_ensemble_predictions = []
     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
-    all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}  # For Task 2
+    all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
 
     k_folds = k_fold_split(X, y, args.k)
     for fold_index, (train_idx, test_idx) in enumerate(k_folds):
@@ -429,7 +426,7 @@ def main():
     print(classification_report(all_true_labels, all_ensemble_predictions))
     plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, args.k, args.n)
 
-    save_results(f"../output/1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
+    save_results(f"../output/1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)
 
 if __name__ == "__main__":
     main()

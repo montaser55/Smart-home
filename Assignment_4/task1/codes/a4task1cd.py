@@ -94,7 +94,6 @@ def read_dataset(folder_path, m):
                 data = []
                 for row in reader:
                     row_str = ','.join(row).strip()
-                    # row_str = transform_data(row_str)
                     row_str = generate_features(row_str, m)
 
 
@@ -360,7 +359,6 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
     for name, (clf_class, param_grid) in classifiers.items():
         print(f"Optimizing {name}...")
 
-        # Start measuring runtime and memory for training
         train_start_time = time.time()
         tracemalloc.start()
 
@@ -377,19 +375,18 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
         clf = clf_class(**best_params)
 
-        if name in ["SVM", "k-NN"]:  # Normalize for these classifiers
+        if name in ["SVM", "k-NN"]:
             normalized_X_train = normalize_dataset(X_train, scaling_method)
             clf.fit(normalized_X_train, y_train)
         else:
             clf.fit(X_train, y_train)
 
-        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
+        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
         tracemalloc.stop()
         train_runtime = time.time() - train_start_time
         runtime_memory_logs[name]["train"].append(
             {"runtime_seconds": train_runtime, "memory_peak_kb": train_peak_memory})
 
-        # Start measuring runtime and memory for testing
         test_start_time = time.time()
         tracemalloc.start()
 
@@ -401,12 +398,11 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             predictions[name] = clf.predict(X_test)
             confidences[name] = clf.predict_proba(X_test)
 
-        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
+        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
         tracemalloc.stop()
         test_runtime = time.time() - test_start_time
         runtime_memory_logs[name]["test"].append({"runtime_seconds": test_runtime, "memory_peak_kb": test_peak_memory})
 
-    # Ensemble classification
     ensemble_predictions = []
     for i in range(len(X_test)):
         if ensemble_method == "random":
@@ -438,9 +434,9 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
 def convert_to_native(obj):
     if isinstance(obj, np.ndarray):
-        return obj.tolist()  # Convert NumPy arrays to Python lists
+        return obj.tolist()
     elif isinstance(obj, np.generic):
-        return obj.item()  # Convert NumPy scalars to native Python types
+        return obj.item()
     return obj
 
 def save_results(file_path, true_labels, individual_predictions, runtime_memory_logs):
@@ -461,22 +457,19 @@ def plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_
 
     accuracies = {}
 
-    # Calculate accuracy for each classifier
     for name, pred_list in all_individual_predictions.items():
         accuracy = accuracy_score(all_true_labels, pred_list)
         accuracies[name] = accuracy
 
-    # Calculate accuracy for ensemble classifier
     ensemble_accuracy = accuracy_score(all_true_labels, all_ensemble_predictions)
     accuracies["Ensemble"] = ensemble_accuracy
 
-    # Plot accuracies
     plt.figure(figsize=(10, 6))
     plt.bar(accuracies.keys(), accuracies.values(), color=['blue', 'green', 'orange', 'purple'])
     plt.xlabel("Classifiers")
     plt.ylabel("Accuracy")
     plt.title("Accuracy of Individual Classifiers and Ensemble Classifier")
-    plt.ylim(0, 1)  # Accuracy ranges from 0 to 1
+    plt.ylim(0, 1)
     for i, (name, acc) in enumerate(accuracies.items()):
         plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center', fontsize=10)
 
@@ -516,7 +509,7 @@ def main():
     all_true_labels = []
     all_ensemble_predictions = []
     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
-    all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}  # For Task 2
+    all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
 
     k_folds = k_fold_split(X, y, args.k)
     for fold_index, (train_idx, test_idx) in enumerate(k_folds):
@@ -546,7 +539,7 @@ def main():
     print(classification_report(all_true_labels, all_ensemble_predictions))
     plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, args.k, args.n)
 
-    save_results(f"../output/1c_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)  # Task 2 output
+    save_results(f"../output/1c_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)
 
 if __name__ == "__main__":
     main()
