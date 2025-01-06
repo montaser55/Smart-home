@@ -316,16 +316,9 @@ def generate_data(input_data, k=3, synthetic_sample_percentage=100, normalizatio
     else:
         raise ValueError("Invalid normalization method specified.")
 
-    print(f"Synthetic data generation started.")
-
-    start_time = time.time()
     total_synthetic_samples = int(synthetic_sample_percentage * len(data) / 100)
-
-
     synthetic_data = generate_synthetic_samples(data, k, total_synthetic_samples)
     synthetic_dataset = denormalize_fn(synthetic_data, param1, param2)
-    print(f"Synthetic data generation completed in {time.time() - start_time:.2f} seconds.")
-
     synthetic_dataset = np.vstack((features, synthetic_dataset))
 
     return synthetic_dataset

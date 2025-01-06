@@ -49,4 +49,4 @@ python3 a4task1cd.py --folder ../dataset/packet_size_direction --k 10 --scenario
 python3 a4task2.py --input_dir ../../task1/output/ --input_file 1a_n10_data.json --output_dir ../output
 
 ### Task 3
-python3 a4task3.py --folder ../dataset/packet_size_direction --k 10 --scenario closed --scaling min_max --ensemble p1_p2_diff --n 45
+python3 a4task3.py --folder ../dataset/packet_size_direction --k 10 --scenario closed --scaling min_max --n 45
