@@ -28,13 +28,10 @@
 - os
 - csv
 - argparse
-- random
 - re
 - ast
 - json
-- time
-- tracemalloc
-- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, classification_report)
+- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, RFE, permutation_importance)
 - numpy
 - collections
 - matplotlib (pyplot)

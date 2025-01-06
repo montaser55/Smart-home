@@ -1,17 +1,15 @@
 import os
 import csv
 import argparse
-import random
 import re
 import ast
 import json
-import time
-import tracemalloc
 
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.feature_selection import RFE
+from sklearn.inspection import permutation_importance
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -107,7 +105,11 @@ def read_dataset(folder_path, m):
                 dataset[label] = data
     return dataset
 
-
+def truncate_dataset(dataset, n):
+    truncated_dataset = {}
+    for key, value_list in dataset.items():
+        truncated_dataset[key] = value_list[:n]
+    return truncated_dataset
 
 def add_label(dataset, scenario, foreground_devices=None):
     labeled_data = []
@@ -138,12 +140,33 @@ def add_label(dataset, scenario, foreground_devices=None):
     return labeled_data, class_label_mapping
 
 
-
 def generate_dataset(dataset):
     X = [row[:-1] for row in dataset]
     y = [row[-1] for row in dataset]
     return X, y
 
+
+def min_max_normal(X):
+    flat_X = np.concatenate([np.array(row) for row in X])
+    global_min = flat_X.min()
+    global_max = flat_X.max()
+    return [(np.array(row) - global_min) / (global_max - global_min) for row in X]
+
+
+def z_score_normal(X):
+    flat_X = np.concatenate([np.array(row) for row in X])
+    global_mean = flat_X.mean()
+    global_std = flat_X.std()
+    return [(np.array(row) - global_mean) / global_std for row in X]
+
+
+def normalize_dataset(X, method):
+    if method == "min_max":
+        return min_max_normal(X)
+    elif method == "z_score":
+        return z_score_normal(X)
+    else:
+        raise ValueError("Unsupported scaling method. Use 'min_max' or 'z_score'.")
 
 def k_fold_split(X, y, k_folds):
     label_to_indices = defaultdict(list)
@@ -174,194 +197,50 @@ def k_fold_split(X, y, k_folds):
     print(f'train_test_splits: {train_test_splits}')
     return train_test_splits
 
-def manual_grid_search(classifier, param_grid, X_train, y_train, X_val, y_val, scaling_method=None):
-    best_params = None
-    best_score = -1
 
-    from itertools import product
-    param_combinations = list(product(*param_grid.values()))
+def plot_feature_importance_avg(avg_importances, classifier_name, output_dir, top_n = 30):
+    sorted_idx = np.argsort(avg_importances)[::-1]
+    sorted_vals = avg_importances[sorted_idx]
+    min_val = sorted_vals.min()
+    if min_val < 0:
+        sorted_vals = sorted_vals - min_val
 
-    if scaling_method:
-        X_train_normalized = normalize_dataset(X_train, scaling_method)
-        X_val_normalized = normalize_dataset(X_val, scaling_method)
-    else:
-        X_train_normalized, X_val_normalized = X_train, X_val
+    top_indices = sorted_idx[:top_n]
+    top_importances = sorted_vals[:top_n]
 
-    for params in param_combinations:
-        param_dict = dict(zip(param_grid.keys(), params))
-        clf = classifier(**param_dict)
+    bottom_indices = sorted_idx[-top_n:]
+    bottom_importances = sorted_vals[-top_n:]
 
-        clf.fit(X_train_normalized, y_train)
-        val_predictions = clf.predict(X_val_normalized)
-        val_score = np.mean(val_predictions == y_val)
+    combined_indices = np.concatenate([top_indices, bottom_indices])
+    combined_importances = np.concatenate([top_importances, bottom_importances])
 
-        if val_score > best_score:
-            best_score = val_score
-            best_params = param_dict
+    plt.figure(figsize=(12, 6))
+    x_positions = np.arange(len(combined_importances))
+    plt.bar(x_positions, combined_importances, alpha=0.7, color='b')
+    plt.title(f"Top {top_n} & Bottom {top_n} Feature Importances - {classifier_name}", fontsize=14)
+    plt.xlabel("Features", fontsize=12)
+    plt.ylabel("Importance Score", fontsize=12)
 
-    return best_params, best_score
-
-def min_max_normal(X):
-    flat_X = np.concatenate([np.array(row) for row in X])
-    global_min = flat_X.min()
-    global_max = flat_X.max()
-    return [(np.array(row) - global_min) / (global_max - global_min) for row in X]
-
-def z_score_normal(X):
-    flat_X = np.concatenate([np.array(row) for row in X])
-    global_mean = flat_X.mean()
-    global_std = flat_X.std()
-    return [(np.array(row) - global_mean) / global_std for row in X]
-
-
-def normalize_dataset(X, method="min_max"):
-    if method == "min_max":
-        return min_max_normal(X)
-    elif method == "z_score":
-        return z_score_normal(X)
-    else:
-        raise ValueError("Unsupported scaling method. Use 'min_max' or 'z_score'.")
-
-
-def truncate_dataset(dataset, n):
-    truncated_dataset = {}
-    for key, value_list in dataset.items():
-        truncated_dataset[key] = value_list[:n]
-    return truncated_dataset
-
-def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
-    classifiers = {
-        "SVM": (SVC, {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"], "probability": [True]}),
-        "k-NN": (KNeighborsClassifier, {"n_neighbors": [3, 5, 7], "metric": ["euclidean", "manhattan"]}),
-        "Random Forest": (RandomForestClassifier, {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
-    }
-
-    predictions = {}
-    confidences = {}
-    runtime_memory_logs = {name: {"train": [], "test": []} for name in classifiers}
-
-    split_idx = int(0.8 * len(X_train))
-    X_train_split, X_val_split = X_train[:split_idx], X_train[split_idx:]
-    y_train_split, y_val_split = y_train[:split_idx], y_train[split_idx:]
-
-    for name, (clf_class, param_grid) in classifiers.items():
-        print(f"Optimizing {name}...")
-
-        train_start_time = time.time()
-        tracemalloc.start()
-
-        best_params, best_score = manual_grid_search(
-            clf_class,
-            param_grid,
-            X_train_split,
-            y_train_split,
-            X_val_split,
-            y_val_split,
-            scaling_method if name in ["SVM", "k-NN"] else None
+    for i, feat_idx in enumerate(combined_indices):
+        plt.text(
+            i,
+            combined_importances[i],
+            str(feat_idx),
+            ha='center',
+            va='bottom',
+            rotation=90,
+            fontsize=9
         )
-        print(f"Best Parameters for {name}: {best_params}, Validation Accuracy: {best_score:.4f}")
-        clf = clf_class(**best_params)
 
-        if name in ["SVM", "k-NN"]:
-            normalized_X_train = normalize_dataset(X_train, scaling_method)
-            clf.fit(normalized_X_train, y_train)
-        else:
-            clf.fit(X_train, y_train)
-
-        train_peak_memory = tracemalloc.get_traced_memory()[1] / 1024  # Peak memory in KB
-        tracemalloc.stop()
-        train_runtime = time.time() - train_start_time
-        runtime_memory_logs[name]["train"].append(
-            {"runtime_seconds": train_runtime, "memory_peak_kb": train_peak_memory})
-
-        test_start_time = time.time()
-        tracemalloc.start()
-
-        if name in ["SVM", "k-NN"]:
-            normalized_X_test = normalize_dataset(X_test, scaling_method)
-            predictions[name] = clf.predict(normalized_X_test)
-            confidences[name] = clf.predict_proba(normalized_X_test)
-        else:
-            predictions[name] = clf.predict(X_test)
-            confidences[name] = clf.predict_proba(X_test)
-
-        test_peak_memory = tracemalloc.get_traced_memory()[1] / 1024
-        tracemalloc.stop()
-        test_runtime = time.time() - test_start_time
-        runtime_memory_logs[name]["test"].append({"runtime_seconds": test_runtime, "memory_peak_kb": test_peak_memory})
-
-    ensemble_predictions = []
-    for i in range(len(X_test)):
-        if ensemble_method == "random":
-            chosen_classifier = random.choice(list(classifiers.keys()))
-            ensemble_predictions.append(predictions[chosen_classifier][i])
-        elif ensemble_method == "highest_confidence":
-            highest_confidence_clf = max(confidences, key=lambda clf: np.max(confidences[clf][i]))
-            ensemble_predictions.append(predictions[highest_confidence_clf][i])
-        elif ensemble_method == "p1_p2_diff":
-            max_diff = -1
-            chosen_class = None
-            for clf, prob in confidences.items():
-                sorted_prob = np.sort(prob[i])[::-1]
-                diff = sorted_prob[0] - sorted_prob[1]
-                if diff > max_diff:
-                    max_diff = diff
-                    chosen_class = predictions[clf][i]
-            ensemble_predictions.append(chosen_class)
-
-    print("\n=== Individual Classifier Reports ===")
-    for name in classifiers:
-        print(f"Classifier: {name}")
-        print(classification_report(y_test, predictions[name]))
-
-    print("\n=== Ensemble Classifier Report ===")
-    print(classification_report(y_test, ensemble_predictions))
-
-    return predictions, ensemble_predictions, y_test, runtime_memory_logs
-
-def convert_to_native(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, np.generic):
-        return obj.item()
-    return obj
-
-def save_results(file_path, true_labels, individual_predictions, runtime_memory_logs):
-    output_data = {
-        "true_labels": [convert_to_native(label) for label in true_labels],
-        "predicted_labels": {name: [convert_to_native(pred) for pred in preds] for name, preds in individual_predictions.items()},
-        "runtime_memory_logs": {
-            name: [convert_to_native(log) for log in logs] for name, logs in runtime_memory_logs.items()
-        },
-    }
-
-    with open(file_path, "w") as f:
-        json.dump(output_data, f, indent=4)
-
-    print(f"Results saved to {file_path}")
-
-
-def plot_feature_importance(feature_importance, classifier_name, fold):
-    """
-    Plots the feature importance for the given classifier.
-    """
-    sorted_idx = np.argsort(feature_importance)[::-1]
-    sorted_importances = feature_importance[sorted_idx]
-    plt.figure(figsize=(10, 6))
-    plt.bar(range(len(sorted_importances)), feature_importance)
-    plt.title(f"Feature Importance - {classifier_name}")
-    plt.xlabel("Feature Index (Sorted by Importance)")
-    plt.ylabel("Importance Score")
     plt.tight_layout()
-    plt.savefig(f"../output/{classifier_name}_feature_importance_fold{fold}.png")
+
+    out_file = os.path.join(output_dir,f"{classifier_name}_top_bottom_{top_n}.png")
+    plt.savefig(out_file)
     plt.close()
-    print(f"Feature importance for {classifier_name} saved as a plot.")
+    print(f"Saved top-bottom-{top_n} plot to '{out_file}'.")
 
 
 def train_with_subset_of_features(X_train, y_train, X_test, y_test, classifier, feature_importance, batch_size=6):
-    """
-    Train a classifier using subsets of features based on importance.
-    """
     sorted_idx = np.argsort(feature_importance)[::-1]
     num_features = len(feature_importance)
     results = []
@@ -378,70 +257,181 @@ def train_with_subset_of_features(X_train, y_train, X_test, y_test, classifier, 
     return results
 
 
-def analyze_feature_importance(X_train, y_train, X_test, y_test, scaling_method, classifiers, fold):
-    """
-    Perform feature importance analysis for the classifiers.
-    """
+def analyze_feature_importance_fold(X_train, y_train, X_test, y_test, scaling_method, classifiers):
+    fold_results = {}
+
+    X_train_np = np.array(X_train)
+    X_test_np = np.array(X_test)
+    y_train_np = np.array(y_train)
+    y_test_np = np.array(y_test)
+
     for name, clf in classifiers.items():
-        print(f"\nAnalyzing feature importance for {name}...")
+        print(f"Analyzing feature importance for {name}...")
 
         if name == "Random Forest":
-            # Random Forest feature importances
-            clf.fit(X_train, y_train)
+            clf.fit(X_train_np, y_train_np)
             feature_importance = clf.feature_importances_
-            plot_feature_importance(feature_importance, name, fold)
-
-            # Measure accuracy with subsets of features
             subset_results = train_with_subset_of_features(
-                np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), clf, feature_importance
+                X_train_np, y_train_np, X_test_np, y_test_np, clf, feature_importance
             )
-            print(f"Subset results for {name}: {subset_results}")
 
         elif name == "SVM":
-            # Use Recursive Feature Elimination (RFE) or similar to determine feature importance
-            from sklearn.feature_selection import RFE
-            rfe = RFE(clf, n_features_to_select=1)
             normalized_X_train = normalize_dataset(X_train, scaling_method)
             normalized_X_test = normalize_dataset(X_test, scaling_method)
-            rfe.fit(normalized_X_train, y_train)
-            feature_importance = rfe.ranking_
-            plot_feature_importance(1 / feature_importance, name, fold)
+            norm_X_train_np = np.array(normalized_X_train)
+            norm_X_test_np = np.array(normalized_X_test)
+            rfe = RFE(clf, n_features_to_select=1)
+            rfe.fit(norm_X_train_np, y_train_np)
+            ranks = rfe.ranking_
+            feature_importance = 1.0 / ranks
 
-            # Measure accuracy with subsets of features
             subset_results = train_with_subset_of_features(
-                np.array(normalized_X_train), np.array(y_train), np.array(normalized_X_test), np.array(y_test), clf, 1 / feature_importance
+                norm_X_train_np, y_train_np, norm_X_test_np, y_test_np, clf, feature_importance
             )
-            print(f"Subset results for {name}: {subset_results}")
 
         elif name == "k-NN":
-            # Use permutation importance for k-NN
-            from sklearn.inspection import permutation_importance
             normalized_X_train = normalize_dataset(X_train, scaling_method)
             normalized_X_test = normalize_dataset(X_test, scaling_method)
+            norm_X_train_np = np.array(normalized_X_train)
+            norm_X_test_np = np.array(normalized_X_test)
+
+            clf.fit(norm_X_train_np, y_train_np)
+            result = permutation_importance(
+                clf, norm_X_train_np, y_train_np, n_repeats=5, random_state=42
+            )
+            feature_importance = result.importances_mean
+
+            subset_results = train_with_subset_of_features(
+                norm_X_train_np, y_train_np, norm_X_test_np, y_test_np, clf, feature_importance
+            )
+        else:
+            feature_importance = np.zeros(X_train_np.shape[1])
+            subset_results = []
+
+        fold_results[name] = {
+            "importance": feature_importance,
+            "subset_results": subset_results
+        }
+
+    return fold_results
+
+def compute_feature_importance(classifiers, X_train, y_train, X_test, y_test, scaling_method):
+    fold_results = {}
+    for clf_name, clf in classifiers.items():
+        print(f"Analyzing feature importance for {clf_name}...")
+        if clf_name == "Random Forest":
+            clf.fit(X_train, y_train)
+            importance = clf.feature_importances_
+            fold_results[clf_name] = {
+                "importance": importance,
+                "subset_results": train_with_subset_of_features(
+                    X_train, y_train, X_test, y_test, clf, importance
+                )
+            }
+        elif clf_name == "SVM":
+            from sklearn.feature_selection import RFE
+            normalized_X_train = normalize_dataset(X_train, scaling_method)
+            normalized_X_test = normalize_dataset(X_test, scaling_method)
+            rfe = RFE(clf, n_features_to_select=1)
+            rfe.fit(normalized_X_train, y_train)
+            importance = 1 / rfe.ranking_
+            fold_results[clf_name] = {
+                "importance": importance,
+                "subset_results": train_with_subset_of_features(
+                    normalized_X_train, y_train, normalized_X_test, y_test, clf, importance
+                )
+            }
+        elif clf_name == "k-NN":
+            from sklearn.inspection import permutation_importance
+            normalized_X_train = normalize_dataset(X_train, scaling_method)
             clf.fit(normalized_X_train, y_train)
             result = permutation_importance(clf, normalized_X_train, y_train, n_repeats=10, random_state=42)
-            feature_importance = result.importances_mean
-            plot_feature_importance(feature_importance, name, fold)
+            importance = result.importances_mean
+            fold_results[clf_name] = {
+                "importance": importance,
+                "subset_results": train_with_subset_of_features(
+                    normalized_X_train, y_train, X_test, y_test, clf, importance
+                )
+            }
+    return fold_results
 
-            # Measure accuracy with subsets of features
-            subset_results = train_with_subset_of_features(
-                np.array(normalized_X_train), np.array(y_train), np.array(normalized_X_test), np.array(y_test), clf, feature_importance
-            )
-            print(f"Subset results for {name}: {subset_results}")
+def analyze_feature_importance_folds(k_folds, X, y, classifiers, scaling_method):
+    num_features = len(X[0])
+    feature_importance_sums = {clf_name: np.zeros(num_features) for clf_name in classifiers}
+    subset_experiment_results = {clf_name: [] for clf_name in classifiers}
+
+    for fold_index, (train_idx, test_idx) in enumerate(k_folds):
+        print(f"Processing Fold {fold_index + 1}/{len(k_folds)}")
+
+        X_train = [X[i] for i in train_idx]
+        X_test = [X[i] for i in test_idx]
+        y_train = [y[i] for i in train_idx]
+        y_test = [y[i] for i in test_idx]
+
+        fold_results = compute_feature_importance(classifiers, X_train, y_train, X_test, y_test, scaling_method)
+
+        for clf_name in fold_results:
+            importance = fold_results[clf_name]["importance"]
+            feature_importance_sums[clf_name] += importance
+            subset_experiment_results[clf_name].append(fold_results[clf_name]["subset_results"])
+
+    return feature_importance_sums, subset_experiment_results
+
+def plot_and_save_feature_importance_avg(feature_importance_sums, num_folds, output_path="../output"):
+    for clf_name, importance_sum in feature_importance_sums.items():
+        avg_importance = importance_sum / num_folds
+        plot_feature_importance_avg(avg_importance, clf_name, output_path)
+        print(f"Feature importance plot saved for {clf_name}.")
+
+def compute_and_plot_subset_experiment_results(subset_experiment_results, output_path="../output"):
+    subset_experiment_averages = {}
+    for clf_name, all_folds_results in subset_experiment_results.items():
+        if not all_folds_results:
+            continue
+        fold_0 = all_folds_results[0]
+        subsets_len = len(fold_0)
+        avg_results = []
+        for idx_in_fold in range(subsets_len):
+            n_feats_vals = []
+            acc_vals = []
+            for fold_result_list in all_folds_results:
+                n_feats_vals.append(fold_result_list[idx_in_fold][0])
+                acc_vals.append(fold_result_list[idx_in_fold][1])
+            num_feats = n_feats_vals[0]
+            avg_accuracy = np.mean(acc_vals)
+            avg_results.append((num_feats, avg_accuracy))
+        subset_experiment_averages[clf_name] = avg_results
+
+    subset_results_path = os.path.join(output_path, "subset_feature_experiment_results.json")
+    with open(subset_results_path, "w") as f:
+        json.dump(subset_experiment_averages, f, indent=4)
+    print(f"Subset-of-features experiment results saved to {subset_results_path}.")
+
+    plt.figure(figsize=(8, 6))
+    for clf_name, avg_results in subset_experiment_averages.items():
+        x_vals = [item[0] for item in avg_results]
+        y_vals = [item[1] for item in avg_results]
+        plt.plot(x_vals, y_vals, marker='o', label=clf_name)
+    plt.title("Accuracy vs. Number of Features (Averaged Across Folds)")
+    plt.xlabel("Number of Features")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.tight_layout()
+    plot_path = os.path.join(output_path, "subset_features_accuracy_plot.png")
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"Subset-of-features accuracy plot saved to {plot_path}.")
 
 def main():
     parser = argparse.ArgumentParser(description="K-Fold Cross-Validation for Open/Closed World Scenarios")
     parser.add_argument("--folder", type=str, required=True, help="Path to folder containing CSV files.")
     parser.add_argument("--k", type=int, required=True, help="Number of folds for cross-validation.")
-    parser.add_argument("--m", type=int, required=False, default = 150, help="Number of sample points.")
+    parser.add_argument("--m", type=int, default=150, help="Number of sample points.")
     parser.add_argument("--n", type=int, required=False, help="Number of flows to take.")
     parser.add_argument("--scenario", type=str, choices=["closed", "open"], required=True,
                         help="Evaluation scenario: 'closed' or 'open'.")
     parser.add_argument("--foreground", type=str, required=False,
                         help="Foreground device name for the open-world scenario (e.g., 'doorsensor').")
-    parser.add_argument("--ensemble_method", choices=["random", "highest_confidence", "p1_p2_diff"], default="random",
-                        required=False,
-                        help="Ensemble method: 'random', 'highest_confidence', or 'p1_p2_diff'.")
     parser.add_argument("--scaling_method", choices=["min_max", "z_score"], default="min_max", required=False,
                         help="Scaling method: 'min_max' or 'z_score'")
     args = parser.parse_args()
@@ -449,9 +439,7 @@ def main():
     dataset = read_dataset(args.folder, args.m)
     if args.n is not None:
         dataset = truncate_dataset(dataset, args.n)
-
     labeled_dataset, label_mapping = add_label(dataset, args.scenario, args.foreground)
-
     X, y = generate_dataset(labeled_dataset)
 
     classifiers = {
@@ -461,15 +449,12 @@ def main():
     }
 
     k_folds = k_fold_split(X, y, args.k)
-    for fold_index, (train_idx, test_idx) in enumerate(k_folds):
-        print(f"Processing Fold {fold_index + 1}/{len(k_folds)}")
+    feature_importance_sums, subset_experiment_results = analyze_feature_importance_folds(
+        k_folds, X, y, classifiers, args.scaling_method
+    )
 
-        X_train = [X[i] for i in train_idx]
-        X_test = [X[i] for i in test_idx]
-        y_train = [y[i] for i in train_idx]
-        y_test = [y[i] for i in test_idx]
-
-        analyze_feature_importance(X_train, y_train, X_test, y_test, args.scaling_method, classifiers, fold_index+1)
+    plot_and_save_feature_importance_avg(feature_importance_sums, args.k)
+    compute_and_plot_subset_experiment_results(subset_experiment_results)
 
 
 if __name__ == "__main__":
