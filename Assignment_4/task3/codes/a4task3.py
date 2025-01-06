@@ -335,8 +335,8 @@ def analyze_feature_importance_fold( X_train, y_train, X_test, y_test, scaling_m
 def plt_accuracy_vs_num_features(subset_experiment_averages, output_dir = "../output"):
     plt.figure(figsize=(8, 6))
     for clf_name, avg_results in subset_experiment_averages.items():
-        x_vals = [item[0] for item in avg_results]  # number of features
-        y_vals = [item[1] for item in avg_results]  # average accuracy
+        x_vals = [item[0] for item in avg_results]
+        y_vals = [item[1] for item in avg_results]
         plt.plot(x_vals, y_vals, marker='o', label=clf_name)
     plt.title("Accuracy vs. Number of Features (Averaged Across Folds)")
     plt.xlabel("Number of Features")
@@ -409,7 +409,7 @@ def main():
 
     k_folds = k_fold_split(X, y, args.k)
 
-    num_features = len(X[0])  # Based on your code, each row is [features..., label], so check dimension carefully.
+    num_features = len(X[0])
     feature_importance_sums = {
         "SVM": np.zeros(num_features),
         "k-NN": np.zeros(num_features),
