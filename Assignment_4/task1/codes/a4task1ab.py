@@ -367,7 +367,7 @@ def plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_
 
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
-    output_path = os.path.join(output_dir, f"accuracy_plot_k{k}_n{n}_real_data.png")
+    output_path = os.path.join(output_dir, f"accuracy_plot_k_{k}_n{n}_real_data.png")
     plt.savefig(output_path)
     plt.close()
 
