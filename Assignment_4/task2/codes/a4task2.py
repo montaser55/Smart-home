@@ -1,6 +1,4 @@
 import json
-from time import process_time_ns
-
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn3
 import argparse
