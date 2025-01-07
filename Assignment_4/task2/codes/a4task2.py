@@ -1,59 +1,65 @@
 import json
+from time import process_time_ns
+
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn3
 import argparse
-import os
 
 
 def plot_venn_diagrams(true_labels, predicted_labels, output_dir, input_file):
-    errors = {
-        model: set(i for i, (true, pred) in enumerate(zip(true_labels, predictions)) if true != pred)
-        for model, predictions in predicted_labels.items()
-    }
 
-    svm_errors = errors.get("SVM", set())
-    rf_errors = errors.get("Random Forest", set())
-    knn_errors = errors.get("k-NN", set())
+    errors = {}
+
+    for model, predictions in predicted_labels.items():
+        model_errors = set()
+
+        for i, (true, pred) in enumerate(zip(true_labels, predictions)):
+            if true != pred:
+                model_errors.add(i)
+
+        errors[model] = model_errors
+
+    svm_errors = errors.get("SVM")
+    rf_errors = errors.get("Random Forest")
+    knn_errors = errors.get("k-NN")
 
     fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 
-    plt.sca(axs[0])
-    venn3((svm_errors, rf_errors, knn_errors), set_labels=("SVM", "Random Forest", "k-NN"))
-    plt.title("Classification Errors")
+    venn3((svm_errors, rf_errors, knn_errors), set_labels=("SVM", "Random Forest", "k-NN"), ax=axs[0])
+    axs[0].set_title("Classification Errors")
 
     only_svm = svm_errors - rf_errors - knn_errors
     only_rf = rf_errors - svm_errors - knn_errors
     only_knn = knn_errors - svm_errors - rf_errors
 
-    svm_rf = set(
-        idx for idx in svm_errors & rf_errors
-        if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx]
-        if idx not in knn_errors or predicted_labels["k-NN"][idx] != predicted_labels["SVM"][idx]
-    )
+    svm_rf = set()
+    for idx in svm_errors & rf_errors:
+        if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx]:
+            if idx not in knn_errors or predicted_labels["k-NN"][idx] != predicted_labels["SVM"][idx]:
+                svm_rf.add(idx)
 
-    rf_knn = set(
-        idx for idx in rf_errors & knn_errors
-        if predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]
-        if idx not in svm_errors or predicted_labels["SVM"][idx] != predicted_labels["Random Forest"][idx]
-    )
+    rf_knn = set()
+    for idx in rf_errors & knn_errors:
+        if predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]:
+            if idx not in svm_errors or predicted_labels["SVM"][idx] != predicted_labels["Random Forest"][idx]:
+                rf_knn.add(idx)
 
-    knn_svm = set(
-        idx for idx in knn_errors & svm_errors
-        if predicted_labels["k-NN"][idx] == predicted_labels["SVM"][idx]
-        if idx not in rf_errors or predicted_labels["Random Forest"][idx] != predicted_labels["k-NN"][idx]
-    )
+    knn_svm = set()
+    for idx in knn_errors & svm_errors:
+        if predicted_labels["k-NN"][idx] == predicted_labels["SVM"][idx]:
+            if idx not in rf_errors or predicted_labels["Random Forest"][idx] != predicted_labels["k-NN"][idx]:
+                knn_svm.add(idx)
 
-    all_three = set(
-        idx for idx in svm_errors & rf_errors & knn_errors
-        if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]
-    )
+    all_three = set()
+    for idx in svm_errors & rf_errors & knn_errors:
+        if predicted_labels["SVM"][idx] == predicted_labels["Random Forest"][idx] == predicted_labels["k-NN"][idx]:
+            all_three.add(idx)
 
-    plt.sca(axs[1])
-    venn3(subsets=(len(only_svm), len(only_rf), len(svm_rf), len(only_knn), len(knn_svm), len(rf_knn), len(all_three)), set_labels=("SVM", "Random Forest", "k-NN"))
-    plt.title("Classification Errors (Same Wrong Label)")
+    venn3(subsets=(len(only_svm), len(only_rf), len(svm_rf), len(only_knn), len(knn_svm), len(rf_knn), len(all_three)), set_labels=("SVM", "Random Forest", "k-NN"), ax=axs[1])
+    axs[1].set_title("Classification Errors (Same Wrong Label)")
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, f"{os.path.splitext(input_file)[0]}_venn.png")
+    output_path = output_dir.rstrip("/") + "/" + input_file.split(".")[0] + "_venn.png"
     plt.savefig(output_path)
     plt.close()
 
@@ -76,11 +82,11 @@ def plot_runtime_and_memory(runtime_memory_logs, output_dir, input_file):
             train_logs = e["train"]
             test_logs = e["test"]
 
-            total_training_time += sum(log["runtime_seconds"] for log in train_logs)
-            total_testing_time += sum(log["runtime_seconds"] for log in test_logs)
-            total_training_memory += sum(log["memory_peak_kb"] for log in train_logs)
-            total_testing_memory += sum(log["memory_peak_kb"] for log in test_logs)
-            total_logs += len(train_logs)
+            total_training_time += train_logs[0]["runtime_seconds"]
+            total_testing_time += test_logs[0]["runtime_seconds"]
+            total_training_memory += train_logs[0]["memory_peak_kb"]
+            total_testing_memory += test_logs[0]["memory_peak_kb"]
+            total_logs += 1
 
         training_times.append(total_training_time / total_logs)
         testing_times.append(total_testing_time / total_logs)
@@ -111,7 +117,7 @@ def plot_runtime_and_memory(runtime_memory_logs, output_dir, input_file):
     axs[1].legend()
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, f"{os.path.splitext(input_file)[0]}_runtime_memory.png")
+    output_path = output_dir.rstrip("/") + "/" + input_file.split(".")[0] + "_runtime_memory.png"
     plt.savefig(output_path)
     plt.close()
 
@@ -124,7 +130,7 @@ def main():
 
     args = parser.parse_args()
 
-    json_file = os.path.join(args.input_dir, args.input_file)
+    json_file = args.input_dir.rstrip("/") + "/" + args.input_file
 
     with open(json_file, 'r') as file:
         data = json.load(file)
@@ -133,7 +139,7 @@ def main():
     predicted_labels = data["predicted_labels"]
     runtime_memory_logs = data["runtime_memory_logs"]
 
-    print(f"Length of labels: {len(true_labels)}")
+    print(f"Number of labels: {len(true_labels)}")
 
     plot_venn_diagrams(true_labels, predicted_labels, args.output_dir, args.input_file)
     plot_runtime_and_memory(runtime_memory_logs, args.output_dir, args.input_file)
