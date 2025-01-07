@@ -22,7 +22,6 @@
 - matplotlib (pyplot)
 - matplotlib_venn (venn3)
 - argparse
-- os
 
 ### Task 3
 - os
