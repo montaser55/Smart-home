@@ -4,15 +4,11 @@ import argparse
 import random
 import re
 import ast
-import json
-import time
-import tracemalloc
 
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score, recall_score
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -236,16 +232,13 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
     background_devices = list(dataset.keys())
     random.shuffle(background_devices)  # Shuffle background devices for randomness
 
-    # Split foreground device's data into k folds
     fg_fold_size = len(foreground_data) // k_folds
     remainder = len(foreground_data) % k_folds
     foreground_folds = [
         foreground_data[i * fg_fold_size + min(i, remainder): (i + 1) * fg_fold_size + min(i + 1, remainder)]
         for i in range(k_folds)
     ]
-    print(f"len(foreground_folds): {len(foreground_folds)}")
 
-    # Prepare background folds using leave-one-device-out, repeating if needed
     background_folds = []
     num_background_devices = len(background_devices)
     for i in range(k_folds):
@@ -255,8 +248,6 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
         test_data = dataset[test_device]
         background_folds.append((train_data, test_data))
 
-    print(f"len(background_folds): {len(background_folds)}")
-    # Combine foreground and background folds
     combined_folds = []
     for i in range(k_folds):
         fg_test = foreground_folds[i]
@@ -268,7 +259,7 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
         X_train = fg_train + bg_train
         X_test = fg_test + bg_test
 
-        y_train = [0] * len(fg_train) + [1] * len(bg_train)  # Foreground: 0, Background: 1
+        y_train = [0] * len(fg_train) + [1] * len(bg_train)
         y_test = [0] * len(fg_test) + [1] * len(bg_test)
 
         combined_folds.append((X_train, y_train, X_test, y_test))
@@ -299,7 +290,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
 
         if name in ["SVM", "k-NN"]:
             X_train_normalized = normalize_dataset(X_train_split, scaling_method)
-            grid_search = GridSearchCV(clf, param_grid, scoring='f1_macro', cv=3)
+            grid_search = GridSearchCV(clf, param_grid, scoring='accuracy', cv=3)
             grid_search.fit(X_train_normalized, y_train_split)
             best_clf = grid_search.best_estimator_
 
@@ -309,7 +300,7 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
             predictions[name] = best_clf.predict(normalized_X_test)
             confidences[name] = best_clf.predict_proba(normalized_X_test)
         else:
-            grid_search = GridSearchCV(clf, param_grid, scoring='f1_macro', cv=3)
+            grid_search = GridSearchCV(clf, param_grid, scoring='accuracy', cv=3)
             grid_search.fit(X_train_split, y_train_split)
             best_clf = grid_search.best_estimator_
             best_clf.fit(X_train, y_train)
@@ -338,14 +329,6 @@ def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling
                     chosen_class = predictions[clf][i]
             ensemble_predictions.append(chosen_class)
 
-    print("\n=== Individual Classifier Reports ===")
-    for name in classifiers:
-        print(f"Classifier: {name}")
-        print(classification_report(y_test, predictions[name]))
-
-    print("\n=== Ensemble Classifier Report ===")
-    print(classification_report(y_test, ensemble_predictions))
-
     return predictions, ensemble_predictions, y_test, runtime_memory_logs
 
 
@@ -356,106 +339,37 @@ def convert_to_native(obj):
         return obj.item()
     return obj
 
-def save_results(file_path, true_labels, individual_predictions, runtime_memory_logs):
-    output_data = {
-        "true_labels": [convert_to_native(label) for label in true_labels],
-        "predicted_labels": {name: [convert_to_native(pred) for pred in preds] for name, preds in individual_predictions.items()},
-        "runtime_memory_logs": {
-            name: [convert_to_native(log) for log in logs] for name, logs in runtime_memory_logs.items()
-        },
-    }
 
-    with open(file_path, "w") as f:
-        json.dump(output_data, f, indent=4)
+def plot_classifier(data, output_dir="../output"):
 
-    print(f"Results saved to {file_path}")
+    devices = list(data.keys())
+    classifiers = list(data[devices[0]].keys())
+    metrics = ["precision", "recall"]
 
+    x = np.arange(len(classifiers))
+    width = 0.15
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
-def plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, k, n, output_dir = "../output"):
+    for metric in metrics:
+        plt.figure(figsize=(12, 7))
+        for i, device in enumerate(devices):
+            values = [data[device][clf][metric] for clf in classifiers]
+            plt.bar(x + i * width, values, width, label=device, color=colors[i % len(colors)])
 
-    accuracies = {}
+        plt.xticks(x + (len(devices) - 1) * width / 2, classifiers)
+        plt.title(f"{metric.capitalize()} for Different Devices and Classifiers")
+        plt.xlabel("Classifiers")
+        plt.ylabel(metric.capitalize())
+        plt.ylim(0, 1)
+        plt.legend(title="Devices")
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.tight_layout()
 
-    for name, pred_list in all_individual_predictions.items():
-        accuracy = accuracy_score(all_true_labels, pred_list)
-        accuracies[name] = accuracy
+        output_path = os.path.join(output_dir, f"{metric}_plot_real_data.png")
+        plt.savefig(output_path)
+        print(f"[INFO] {metric.capitalize()} plot saved at {output_path}")
+        plt.close()
 
-    ensemble_accuracy = accuracy_score(all_true_labels, all_ensemble_predictions)
-    accuracies["Ensemble"] = ensemble_accuracy
-
-    plt.figure(figsize=(10, 6))
-    plt.bar(accuracies.keys(), accuracies.values(), color= ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'] )
-    plt.xlabel("Classifiers")
-    plt.ylabel("Accuracy")
-    plt.title("Accuracy of Individual Classifiers and Ensemble Classifier")
-    plt.ylim(0, 1)
-    for i, (name, acc) in enumerate(accuracies.items()):
-        plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center', fontsize=10)
-
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    output_path = os.path.join(output_dir, f"accuracy_plot_k_{k}_n{n}_real_data.png")
-    plt.savefig(output_path)
-    plt.close()
-
-
-# def main():
-#     parser = argparse.ArgumentParser(description="K-Fold Cross-Validation for Open/Closed World Scenarios")
-#     parser.add_argument("--folder", type=str, required=True, help="Path to folder containing CSV files.")
-#     parser.add_argument("--k", type=int, required=True, help="Number of folds for cross-validation.")
-#     parser.add_argument("--m", type=int, required=False, default = 150, help="Number of sample points.")
-#     parser.add_argument("--n", type=int, required=False, help="Number of flows to take.")
-#     parser.add_argument("--scenario", type=str, choices=["closed", "open"], required=True,
-#                         help="Evaluation scenario: 'closed' or 'open'.")
-#     parser.add_argument("--foreground", type=str, required=False,
-#                         help="Foreground device name for the open-world scenario (e.g., 'doorsensor').")
-#     parser.add_argument("--ensemble_method", choices=["random", "highest_confidence", "p1_p2_diff"], default="random",
-#                         required=False,
-#                         help="Ensemble method: 'random', 'highest_confidence', or 'p1_p2_diff'.")
-#     parser.add_argument("--scaling_method", choices=["min_max", "z_score"], default="min_max", required=False,
-#                         help="Scaling method: 'min_max' or 'z_score'")
-#     args = parser.parse_args()
-#
-#     dataset = read_dataset(args.folder, args.m)
-#     if args.n is not None:
-#         dataset = truncate_dataset(dataset, args.n)
-#
-#     labeled_dataset, label_mapping = add_label(dataset, args.scenario, args.foreground)
-#
-#     X, y = generate_dataset(labeled_dataset)
-#     all_true_labels = []
-#     all_ensemble_predictions = []
-#     all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
-#     all_runtime_memory_logs = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
-#
-#     k_folds = k_fold_split(X, y, args.k)
-#     for fold_index, (train_idx, test_idx) in enumerate(k_folds):
-#         print(f"Processing Fold {fold_index + 1}/{len(k_folds)}")
-#
-#         X_train = [X[i] for i in train_idx]
-#         X_test = [X[i] for i in test_idx]
-#         y_train = [y[i] for i in train_idx]
-#         y_test = [y[i] for i in test_idx]
-#
-#         predictions, ensemble_predictions, true_labels, runtime_memory_logs = train_test_models(X_train, y_train, X_test, y_test,
-#                                                                            args.ensemble_method, args.scaling_method)
-#
-#         all_true_labels.extend(true_labels)
-#         all_ensemble_predictions.extend(ensemble_predictions)
-#
-#         for name in predictions:
-#             all_individual_predictions[name].extend(predictions[name])
-#             all_runtime_memory_logs[name].append(runtime_memory_logs[name])
-#
-#     print("\n=== Averaged Individual Classifier Reports ===")
-#     for name, pred_list in all_individual_predictions.items():
-#         print(f"Classifier: {name}")
-#         print(classification_report(all_true_labels, pred_list))
-#
-#     print("\n=== Averaged Ensemble Classifier Report ===")
-#     print(classification_report(all_true_labels, all_ensemble_predictions))
-#     plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, args.k, args.n)
-#
-#     save_results(f"../output/1a_n{args.n}_data.json", all_true_labels, all_individual_predictions, all_runtime_memory_logs)
 
 def main():
     parser = argparse.ArgumentParser(description="Open-World Scenario for K-Fold Cross-Validation")
@@ -473,49 +387,53 @@ def main():
     if args.n is not None:
        dataset = truncate_dataset(dataset, args.n)
 
-    all_true_labels = []
-    all_ensemble_predictions = []
-    all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
-
-    classifiers = {
-        "SVM": SVC(probability=True, kernel="linear"),
-        "k-NN": KNeighborsClassifier(),
-        "Random Forest": RandomForestClassifier(),
-    }
-
+    results = {}
     for foreground_device in dataset.keys():
         print(f"\n[INFO] Using {foreground_device} as the foreground device.")
+        all_true_labels = []
+        all_ensemble_predictions = []
+        all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
 
-        # Create open-world scenario folds for this foreground device
-        folds = open_world_k_fold_split(dataset.copy(), foreground_device, args.k)
+        folds = open_world_k_fold_split(dataset, foreground_device, args.k)
 
         for fold_index, (X_train, y_train, X_test, y_test) in enumerate(folds):
             print(f"\n[INFO] Processing Fold {fold_index + 1}/{len(folds)} for {foreground_device}.")
 
-            # Train and test models
             predictions, ensemble_predictions, true_labels, _ = train_test_models(
                 X_train, y_train, X_test, y_test, args.ensemble_method, args.scaling_method
             )
 
-            # Aggregate results
             all_true_labels.extend(true_labels)
             all_ensemble_predictions.extend(ensemble_predictions)
 
             for name in predictions:
                 all_individual_predictions[name].extend(predictions[name])
 
-    print("\n=== Averaged Individual Classifier Reports Across All Experiments ===")
-    for name, pred_list in all_individual_predictions.items():
-        print(f"Classifier: {name}")
-        print(classification_report(all_true_labels, pred_list))
+        results[foreground_device] = {}
 
-    print("\n=== Averaged Ensemble Classifier Report Across All Experiments ===")
-    print(classification_report(all_true_labels, all_ensemble_predictions))
+        for name, pred_list in all_individual_predictions.items():
+            precision = precision_score(all_true_labels, pred_list, average="binary")
+            recall = recall_score(all_true_labels, pred_list, average="binary")
+            results[foreground_device][name] = {
+                "precision": precision,
+                "recall": recall,
+            }
+            print(f"\nClassifier: {name}")
+            print(f"Precision: {precision:.2f}")
+            print(f"Recall: {recall:.2f}")
 
-    # Plot accuracy results
-    plot_classifier_accuracies(all_true_labels, all_individual_predictions, all_ensemble_predictions, args.k, args.n)
+        ensemble_precision = precision_score(all_true_labels, all_ensemble_predictions, average="binary")
+        ensemble_recall = recall_score(all_true_labels, all_ensemble_predictions, average="binary")
+        results[foreground_device]["ensemble"] = {
+            "precision": ensemble_precision,
+            "recall": ensemble_recall,
+        }
+        print(f"\nClassifier: Ensemble")
+        print(f"Precision: {ensemble_precision:.2f}")
+        print(f"Recall: {ensemble_recall:.2f}")
+        print("------------------------------")
 
-    # save_results(f"../output/open_world_results.json", all_true_labels, all_individual_predictions, {})
+    plot_classifier(results)
 
 if __name__ == "__main__":
     main()
