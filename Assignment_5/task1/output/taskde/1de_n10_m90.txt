@@ -1,0 +1,13 @@
+Classifier Results:
+
+Classifier: SVM
+Accuracy: 0.30
+
+Classifier: k-NN
+Accuracy: 0.40
+
+Classifier: Random Forest
+Accuracy: 0.70
+
+Classifier: ensemble
+Accuracy: 0.62

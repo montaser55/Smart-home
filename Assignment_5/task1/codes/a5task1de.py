@@ -8,7 +8,8 @@ import ast
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import GridSearchCV
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -106,31 +107,17 @@ def read_dataset(folder_path, m):
 
 
 
-def add_label(dataset, scenario, foreground_devices=None):
+def add_label(dataset):
     labeled_data = []
 
-    if scenario == "closed":
-        device_names = list(dataset.keys())
-        class_label_mapping = {device: idx for idx, device in enumerate(device_names)}
+    device_names = list(dataset.keys())
+    class_label_mapping = {device: idx for idx, device in enumerate(device_names)}
 
-        for device, packets in dataset.items():
-            label = class_label_mapping[device]
-            for packet in packets:
-                labeled_data.append(packet + [label])
+    for device, packets in dataset.items():
+        label = class_label_mapping[device]
+        for packet in packets:
+            labeled_data.append(packet + [label])
 
-    elif scenario == "open":
-        if not foreground_devices:
-            raise ValueError("Foreground devices must be specified for the open-world scenario.")
-
-        class_label_mapping = {"foreground": 0, "background": 1}
-
-        for device, packets in dataset.items():
-            label = 0 if device in foreground_devices else 1
-            for packet in packets:
-                labeled_data.append(packet + [label])
-
-    else:
-        raise ValueError("Unsupported scenario. Use 'closed' or 'open'.")
 
     return labeled_data, class_label_mapping
 
@@ -199,49 +186,6 @@ def truncate_dataset(dataset, n):
         truncated_dataset[key] = value_list[:n]
     return truncated_dataset
 
-def open_world_k_fold_split(dataset, foreground_device, k_folds):
-    foreground_data = dataset.get(foreground_device)
-    random.shuffle(foreground_data)
-    background_devices = list(dataset.keys())
-    random.shuffle(background_devices)
-
-    fg_fold_size = len(foreground_data) // k_folds
-    remainder = len(foreground_data) % k_folds
-    foreground_folds = [
-        foreground_data[i * fg_fold_size + min(i, remainder): (i + 1) * fg_fold_size + min(i + 1, remainder)]
-        for i in range(k_folds)
-    ]
-
-    background_folds = []
-    num_background_devices = len(background_devices)
-    for i in range(k_folds):
-        test_device = background_devices[i % num_background_devices]  # Cycle through devices
-        train_devices = [device for device in background_devices if device != test_device]
-        train_data = [packet for device in train_devices for packet in dataset[device]]
-        test_data = dataset[test_device]
-        background_folds.append((train_data, test_data))
-
-    combined_folds = []
-    for i in range(k_folds):
-        fg_test = foreground_folds[i]
-        fg_train = [
-            packet for j, fold in enumerate(foreground_folds) if j != i for packet in fold
-        ]
-        bg_train, bg_test = background_folds[i]
-
-        X_train = fg_train + bg_train
-        X_test = fg_test + bg_test
-
-        y_train = [0] * len(fg_train) + [1] * len(bg_train)
-        y_test = [0] * len(fg_test) + [1] * len(bg_test)
-
-        combined_folds.append((X_train, y_train, X_test, y_test))
-
-    return combined_folds
-
-
-
-from sklearn.model_selection import GridSearchCV
 
 def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
     classifiers = {
@@ -312,37 +256,17 @@ def convert_to_native(obj):
         return obj.item()
     return obj
 
+def save_file(results, n, m, output_dir = "../output/taskde/"):
+    output_file = os.path.join(output_dir, f"1de_n{n}_m{m}.txt")
 
-def plot_classifier(data, output_dir="../output"):
+    with open(output_file, "w") as file:
+        file.write("Classifier Results:\n")
+        for classifier, metrics in results.items():
+            file.write(f"\nClassifier: {classifier}\n")
+            for metric, value in metrics.items():
+                file.write(f"{metric.capitalize()}: {value:.2f}\n")
 
-    devices = list(data.keys())
-    classifiers = list(data[devices[0]].keys())
-    metrics = ["precision", "recall"]
-
-    x = np.arange(len(classifiers))
-    width = 0.15
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
-
-    for metric in metrics:
-        plt.figure(figsize=(12, 7))
-        for i, device in enumerate(devices):
-            values = [data[device][clf][metric] for clf in classifiers]
-            plt.bar(x + i * width, values, width, label=device, color=colors[i % len(colors)])
-
-        plt.xticks(x + (len(devices) - 1) * width / 2, classifiers)
-        plt.title(f"{metric.capitalize()} for Different Devices and Classifiers")
-        plt.xlabel("Classifiers")
-        plt.ylabel(metric.capitalize())
-        plt.ylim(0, 1)
-        plt.legend(title="Devices")
-        plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.tight_layout()
-
-        output_path = os.path.join(output_dir, f"{metric}_plot_real_data.png")
-        plt.savefig(output_path)
-        print(f"[INFO] {metric.capitalize()} plot saved at {output_path}")
-        plt.close()
-
+    print(f"[INFO] Results saved to {output_file}")
 
 def main():
     parser = argparse.ArgumentParser(description="Open-World Scenario for K-Fold Cross-Validation")
@@ -360,53 +284,53 @@ def main():
     if args.n is not None:
        dataset = truncate_dataset(dataset, args.n)
 
+    labeled_dataset, label_mapping = add_label(dataset)
+
+    X, y = generate_dataset(labeled_dataset)
+    folds = k_fold_split(X, y, args.k)
+
     results = {}
-    for foreground_device in dataset.keys():
-        print(f"\n[INFO] Using {foreground_device} as the foreground device.")
-        all_true_labels = []
-        all_ensemble_predictions = []
-        all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
 
-        folds = open_world_k_fold_split(dataset, foreground_device, args.k)
+    all_true_labels = []
+    all_ensemble_predictions = []
+    all_individual_predictions = {name: [] for name in ["SVM", "k-NN", "Random Forest"]}
 
-        for fold_index, (X_train, y_train, X_test, y_test) in enumerate(folds):
-            print(f"\n[INFO] Processing Fold {fold_index + 1}/{len(folds)} for {foreground_device}.")
+    for fold_index, (train_idx, test_idx) in enumerate(folds):
+        print(f"Processing Fold {fold_index + 1}/{len(folds)}")
 
-            predictions, ensemble_predictions, true_labels, _ = train_test_models(
-                X_train, y_train, X_test, y_test, args.ensemble_method, args.scaling_method
-            )
+        X_train = [X[i] for i in train_idx]
+        X_test = [X[i] for i in test_idx]
+        y_train = [y[i] for i in train_idx]
+        y_test = [y[i] for i in test_idx]
 
-            all_true_labels.extend(true_labels)
-            all_ensemble_predictions.extend(ensemble_predictions)
+        predictions, ensemble_predictions, true_labels, _ = train_test_models(
+            X_train, y_train, X_test, y_test, args.ensemble_method, args.scaling_method
+        )
 
-            for name in predictions:
-                all_individual_predictions[name].extend(predictions[name])
+        all_true_labels.extend(true_labels)
+        all_ensemble_predictions.extend(ensemble_predictions)
 
-        results[foreground_device] = {}
+        for name in predictions:
+            all_individual_predictions[name].extend(predictions[name])
 
-        for name, pred_list in all_individual_predictions.items():
-            precision = precision_score(all_true_labels, pred_list, average="binary")
-            recall = recall_score(all_true_labels, pred_list, average="binary")
-            results[foreground_device][name] = {
-                "precision": precision,
-                "recall": recall,
-            }
-            print(f"\nClassifier: {name}")
-            print(f"Precision: {precision:.2f}")
-            print(f"Recall: {recall:.2f}")
 
-        ensemble_precision = precision_score(all_true_labels, all_ensemble_predictions, average="binary")
-        ensemble_recall = recall_score(all_true_labels, all_ensemble_predictions, average="binary")
-        results[foreground_device]["ensemble"] = {
-            "precision": ensemble_precision,
-            "recall": ensemble_recall,
+    for name, pred_list in all_individual_predictions.items():
+        accuracy = accuracy_score(all_true_labels, pred_list, normalize=True)
+        results[name] = {
+            "accuracy": accuracy,
         }
-        print(f"\nClassifier: Ensemble")
-        print(f"Precision: {ensemble_precision:.2f}")
-        print(f"Recall: {ensemble_recall:.2f}")
-        print("------------------------------")
+        print(f"\nClassifier: {name}")
+        print(f"Accuracy: {accuracy:.2f}")
 
-    plot_classifier(results)
+    ensemble_accuracy = accuracy_score(all_true_labels, all_ensemble_predictions, normalize=True)
+    results["ensemble"] = {
+        "accuracy": ensemble_accuracy
+    }
+    print(f"\nClassifier: Ensemble")
+    print(f"Accuracy: {ensemble_accuracy:.2f}")
+    print("------------------------------")
+
+    save_file(results, args.n, args.m)
 
 if __name__ == "__main__":
     main()

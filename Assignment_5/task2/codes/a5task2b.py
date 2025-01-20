@@ -229,31 +229,27 @@ def truncate_dataset(dataset, n):
 
 def open_world_k_fold_split(dataset, foreground_device, k_folds):
     foreground_data = dataset.get(foreground_device)
-    random.shuffle(foreground_data)  # Shuffle foreground data before splitting
+    random.shuffle(foreground_data)
     background_devices = list(dataset.keys())
-    random.shuffle(background_devices)  # Shuffle background devices for randomness
+    random.shuffle(background_devices)
 
-    # Split foreground device's data into k folds
     fg_fold_size = len(foreground_data) // k_folds
     remainder = len(foreground_data) % k_folds
     foreground_folds = [
         foreground_data[i * fg_fold_size + min(i, remainder): (i + 1) * fg_fold_size + min(i + 1, remainder)]
         for i in range(k_folds)
     ]
-    print(f"len(foreground_folds): {len(foreground_folds)}")
 
-    # Prepare background folds using leave-one-device-out, repeating if needed
     background_folds = []
     num_background_devices = len(background_devices)
     for i in range(k_folds):
-        test_device = background_devices[i % num_background_devices]  # Cycle through devices
+        test_device = background_devices[i % num_background_devices]
         train_devices = [device for device in background_devices if device != test_device]
         train_data = [packet for device in train_devices for packet in dataset[device]]
         test_data = dataset[test_device]
         background_folds.append((train_data, test_data))
 
-    print(f"len(background_folds): {len(background_folds)}")
-    # Combine foreground and background folds
+
     combined_folds = []
     for i in range(k_folds):
         fg_test = foreground_folds[i]
@@ -265,7 +261,7 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
         X_train = fg_train + bg_train
         X_test = fg_test + bg_test
 
-        y_train = [0] * len(fg_train) + [1] * len(bg_train)  # Foreground: 0, Background: 1
+        y_train = [0] * len(fg_train) + [1] * len(bg_train)
         y_test = [0] * len(fg_test) + [1] * len(bg_test)
 
         combined_folds.append((X_train, y_train, X_test, y_test))
