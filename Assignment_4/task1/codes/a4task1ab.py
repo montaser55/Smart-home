@@ -375,7 +375,7 @@ def main():
     parser.add_argument("--k", type=int, required=True, help="Number of folds for cross-validation.")
     parser.add_argument("--m", type=int, required=False, default = 150, help="Number of sample points.")
     parser.add_argument("--n", type=int, required=False, help="Number of flows to take.")
-    parser.add_argument("--scenario", type=str, choices=["closed", "open"], required=True,
+    parser.add_argument("--scenario", type=str, default = "closed", required=False,
                         help="Evaluation scenario: 'closed' or 'open'.")
     parser.add_argument("--foreground", type=str, required=False,
                         help="Foreground device name for the open-world scenario (e.g., 'doorsensor').")
