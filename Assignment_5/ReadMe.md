@@ -4,36 +4,39 @@
 
 ### Task 1
 - os
-- csv
-- argparse
-- random
 - re
 - ast
-- json
-- time
-- tracemalloc
-- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, classification_report, accuracy_score)
+- argparse
 - numpy
-- collections
-- matplotlib
+- pandas
+- tensorflow
+- matplotlib.pyplot
+- random
+- tensorflow (Sequential, Conv1D, BatchNormalization, Dropout, Dense, Flatten, Input, Activation, MaxPooling1D)
+- collections (defaultdict)
+- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, accuracy_score, GridSearchCV)
+
 
 ### Task 2
-- json
-- matplotlib (pyplot)
-- matplotlib_venn (venn3)
+- os
+- re
+- ast
 - argparse
+- numpy
+- pandas
+- tensorflow
+- matplotlib.pyplot
+- random
+- tensorflow (Sequential, Conv1D, BatchNormalization, Dropout, Dense, Flatten, Input, Activation, MaxPooling1D)
+- collections (defaultdict)
+- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, precision_score, recall_score, GridSearchCV)
+
 
 ### Task 3
 - os
-- csv
 - argparse
-- re
-- ast
-- json
-- sklearn (SVC, KNeighborsClassifier, RandomForestClassifier, RFE, permutation_importance)
-- numpy
-- collections
-- matplotlib (pyplot)
+- sys
+- importlib (import_module)
 
 ---
 
@@ -99,19 +102,19 @@ python3 a5task3.py -s plot_venn_diagram_and_runtime_memory --input_dir ../../../
 python3 a5task3.py -s plot_feature_importance --folder ../../../Assignment_4/task3/dataset/packet_size_direction --k 10 --scenario closed --scaling min_max --n 45
 
 #### Plot Deep Learning Closed World Accuracy
-python3 a5task3.py -s plot_deep_learning_closed_world_accuracy --main_folder ../dataset/packet_size_direction
+python3 a5task3.py -s plot_deep_learning_closed_world_accuracy --main_folder ../../task1/dataset/packet_size_direction
 
 #### Plot Deep Learning Closed World Synthetic Accuracy
-python3 a5task3.py -s plot_deep_learning_closed_world_synthetic_accuracy --main_folder ../dataset/packet_size_direction
+python3 a5task3.py -s plot_deep_learning_closed_world_synthetic_accuracy --main_folder ../../task1/dataset/packet_size_direction
 
 #### Plot Traditional ML Open World Precision Recall
-python3 a5task3.py -s plot_traditional_ml_open_world_precision_recall --folder ../dataset/packet_size_direction --k 5 --scaling min_max --ensemble p1_p2_diff --n 45 --m 150
+python3 a5task3.py -s plot_traditional_ml_open_world_precision_recall --folder ../../task2/dataset/packet_size_direction --k 5 --scaling min_max --ensemble p1_p2_diff --n 45 --m 150
 
 #### Plot Traditional ML Open World Synthetic Precision Recall
-python3 a5task3.py -s plot_traditional_ml_open_world_synthetic_precision_recall --folder ../dataset/packet_size_direction --k 5 --scaling min_max --ensemble p1_p2_diff --n 45 --m 150
+python3 a5task3.py -s plot_traditional_ml_open_world_synthetic_precision_recall --folder ../../task2/dataset/packet_size_direction --k 5 --scaling min_max --ensemble p1_p2_diff --n 45 --m 150
 
 #### Plot Deep Learning Open World Precision Recall
-python3 a5task3.py -s plot_deep_learning_open_world_precision_recall --main_folder ../dataset/packet_size_direction
+python3 a5task3.py -s plot_deep_learning_open_world_precision_recall --main_folder ../../task2/dataset/packet_size_direction
 
 #### Plot Deep Learning Open World Synthetic Precision Recall
-python3 a5task3.py -s plot_deep_learning_open_world_synthetic_precision_recall --main_folder ../dataset/packet_size_direction
+python3 a5task3.py -s plot_deep_learning_open_world_synthetic_precision_recall --main_folder ../../task2/dataset/packet_size_direction

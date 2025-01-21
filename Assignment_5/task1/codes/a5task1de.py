@@ -12,7 +12,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 from collections import defaultdict
-import matplotlib.pyplot as plt
 
 
 def parse_flow_string(flow_string):

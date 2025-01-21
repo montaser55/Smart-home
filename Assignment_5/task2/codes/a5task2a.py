@@ -9,6 +9,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, recall_score
+from sklearn.model_selection import GridSearchCV
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -239,9 +240,6 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
 
     return combined_folds
 
-
-
-from sklearn.model_selection import GridSearchCV
 
 def train_test_models(X_train, y_train, X_test, y_test, ensemble_method, scaling_method):
     classifiers = {
