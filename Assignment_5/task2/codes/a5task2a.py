@@ -216,7 +216,7 @@ def open_world_k_fold_split(dataset, foreground_device, k_folds):
     background_folds = []
     num_background_devices = len(background_devices)
     for i in range(k_folds):
-        test_device = background_devices[i % num_background_devices]  # Cycle through devices
+        test_device = background_devices[i % num_background_devices]
         train_devices = [device for device in background_devices if device != test_device]
         train_data = [packet for device in train_devices for packet in dataset[device]]
         test_data = dataset[test_device]
