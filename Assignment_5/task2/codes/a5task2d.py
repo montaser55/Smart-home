@@ -364,8 +364,7 @@ def main():
             X_train, X_val, y_train, y_val = train_val_split(all_X, all_y, args.val_split)
 
             print("Starting hyperparameter tuning")
-            # best_params = tune_hyperparameters(X_train, y_train, X_val, y_val, args.epochs)
-            best_params = (0.001, 0.3, 5, 32)
+            best_params = tune_hyperparameters(X_train, y_train, X_val, y_val, args.epochs)
 
             avg_precision, avg_recall = train_and_evaluate_kfold(
                 dataset, foreground_device, best_params, args.k, args.epochs, args.val_split, 3
