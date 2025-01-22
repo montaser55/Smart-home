@@ -197,10 +197,6 @@ def train_and_evaluate_kfold(dataset, foreground_device, best_params, k, epochs,
         X_test = np.array(X_test_list, dtype=np.float32)
         y_test = np.array(y_test_list, dtype=np.int32)
 
-        if X_train.ndim == 2:
-            X_train = np.expand_dims(X_train, axis=-1)
-            X_test = np.expand_dims(X_test, axis=-1)
-
         y_train = tf.keras.utils.to_categorical(y_train, 2).astype(np.float32)
 
         X_train = np.tile(X_train, (6, 1, 1))
