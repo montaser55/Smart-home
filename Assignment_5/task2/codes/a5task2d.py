@@ -206,8 +206,8 @@ def tune_hyperparameters(X_train, y_train, X_val, y_val, epochs):
     best_accuracy = 0
     best_params = None
 
-    X_train = np.tile(X_train, (3, 1, 1))
-    y_train = np.tile(y_train, (3, 1))
+    X_train = np.tile(X_train, (6, 1, 1))
+    y_train = np.tile(y_train, (6, 1))
 
     for lr in learning_rates:
         for dr in dropout_rates:
@@ -229,34 +229,6 @@ def tune_hyperparameters(X_train, y_train, X_val, y_val, epochs):
     return best_params
 
 
-def replace_with_synthetic_data(X_train, y_train, k=3):
-    X_train = np.array(X_train)
-    y_train = np.array(y_train)
-
-    unique_labels = np.unique(y_train)
-
-    X_synthetic_list = []
-    y_synthetic_list = []
-
-    for label in unique_labels:
-        indices = np.where(y_train == label)[0]
-        X_label = X_train[indices]
-
-        X_label_synth = generate_synthetic_dataset(X_label, k=k)
-        X_synthetic_list.append(X_label_synth)
-        y_synthetic_list.append(np.full(len(X_label_synth), label))
-
-    X_synthetic = np.concatenate(X_synthetic_list, axis=0)
-    y_synthetic = np.concatenate(y_synthetic_list, axis=0)
-
-    idx = np.arange(len(X_synthetic))
-    np.random.shuffle(idx)
-    X_synthetic = X_synthetic[idx]
-    y_synthetic = y_synthetic[idx]
-
-    return X_synthetic, y_synthetic
-
-
 def train_and_evaluate_kfold(dataset, foreground_device, best_params, k, epochs, val_split, k_synth):
 
     fold_metrics = []
@@ -272,16 +244,27 @@ def train_and_evaluate_kfold(dataset, foreground_device, best_params, k, epochs,
         y_test = np.array(y_test_list, dtype=np.int32)
 
         print("Generating synthetic training data")
-        X_train, y_train = replace_with_synthetic_data(X_train, y_train, k=k_synth)
 
-        if X_train.ndim == 2:
-            X_train = np.expand_dims(X_train, axis=-1)
-            X_test = np.expand_dims(X_test, axis=-1)
+        X_train_synthetic = []
+        y_train_synthetic = []
+
+        for i in range(len(X_train)):
+            X_sample = X_train[i:i + 1]
+            y_sample = y_train[i:i + 1]
+
+            X_synth = generate_synthetic_dataset(X_sample, k=k_synth)
+            y_synth = np.array([y_sample[0]])
+
+            X_train_synthetic.append(X_synth)
+            y_train_synthetic.append(y_synth)
+
+        X_train = np.concatenate(X_train_synthetic, axis=0)
+        y_train = np.concatenate(y_train_synthetic, axis=0)
 
         y_train = tf.keras.utils.to_categorical(y_train, 2).astype(np.float32)
 
-        X_train = np.tile(X_train, (3, 1, 1))
-        y_train = np.tile(y_train, (3, 1))
+        X_train = np.tile(X_train, (6, 1, 1))
+        y_train = np.tile(y_train, (6, 1))
 
         model = build_cnn(X_train.shape[1:], 2, best_ks, best_dr)
         model.compile(
@@ -381,7 +364,8 @@ def main():
             X_train, X_val, y_train, y_val = train_val_split(all_X, all_y, args.val_split)
 
             print("Starting hyperparameter tuning")
-            best_params = tune_hyperparameters(X_train, y_train, X_val, y_val, args.epochs)
+            # best_params = tune_hyperparameters(X_train, y_train, X_val, y_val, args.epochs)
+            best_params = (0.001, 0.3, 5, 32)
 
             avg_precision, avg_recall = train_and_evaluate_kfold(
                 dataset, foreground_device, best_params, args.k, args.epochs, args.val_split, 3
