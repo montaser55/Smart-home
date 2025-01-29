@@ -1,171 +1,171 @@
 {
     "true_labels": [
         0,
-        1,
-        2,
-        3,
         0,
         1,
-        2,
-        3,
-        0,
         1,
         2,
-        3,
-        0,
-        1,
         2,
         3,
-        0,
-        1,
-        2,
         3,
         0,
-        1,
-        2,
-        3,
         0,
         1,
-        2,
-        3,
-        0,
         1,
         2,
-        3,
-        0,
-        1,
         2,
         3,
+        3,
+        0,
         0,
         1,
+        1,
         2,
+        2,
+        3,
+        3,
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3,
+        3,
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3,
         3
     ],
     "predicted_labels": {
         "SVM": [
             2,
-            3,
-            2,
-            3,
-            2,
-            3,
             2,
             3,
             3,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            2,
+            2,
+            3,
+            3,
+            0,
+            3,
+            1,
             1,
             2,
+            0,
             1,
+            1,
+            3,
+            3,
+            3,
+            3,
+            0,
+            2,
             3,
             1,
             0,
-            1,
             0,
             3,
-            0,
             1,
-            0,
-            3,
+            2,
             2,
             1,
-            3,
-            1,
-            2,
-            1,
-            0,
-            1,
-            0,
-            1,
-            3,
-            1,
-            0,
-            1,
-            3,
-            1,
-            0,
             1
         ],
         "k-NN": [
             2,
-            3,
-            2,
-            1,
-            2,
-            3,
             2,
             3,
             3,
+            2,
+            0,
             1,
+            1,
+            0,
+            0,
+            3,
+            0,
+            2,
+            2,
+            3,
+            3,
+            0,
+            0,
+            1,
+            3,
+            2,
             0,
             3,
             1,
             1,
-            0,
-            1,
-            1,
-            1,
-            0,
-            1,
-            1,
             3,
-            0,
-            1,
-            3,
-            3,
-            0,
-            1,
-            0,
-            3,
-            0,
-            1,
             1,
             1,
             0,
-            1,
+            0,
             3,
             1,
             0,
+            0,
+            1,
+            1,
+            0,
+            2,
+            1,
             1
         ],
         "Random Forest": [
             2,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            3,
             2,
             1,
-            0,
             1,
-            0,
-            1,
-            0,
-            3,
             2,
-            3,
             0,
-            3,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
             2,
-            3,
-            0,
-            0,
-            0,
-            1,
-            0,
-            3,
-            2,
-            1,
-            0,
-            1,
             2,
             3,
             3,
+            0,
+            0,
+            1,
+            3,
+            2,
+            2,
+            1,
+            3,
+            3,
+            1,
+            3,
+            3,
+            2,
+            2,
+            1,
+            3,
+            0,
+            0,
+            1,
             1,
             2,
+            0,
+            3,
             3
         ]
     },
@@ -174,140 +174,70 @@
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.013855934143066406,
-                        "memory_peak_kb": 198.71875
+                        "runtime_seconds": 0.011703968048095703,
+                        "memory_peak_kb": 178.767578125
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.00047516822814941406,
-                        "memory_peak_kb": 17.078125
+                        "runtime_seconds": 0.0005168914794921875,
+                        "memory_peak_kb": 32.046875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.010940790176391602,
-                        "memory_peak_kb": 182.7158203125
+                        "runtime_seconds": 0.012331962585449219,
+                        "memory_peak_kb": 163.0517578125
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.00041484832763671875,
-                        "memory_peak_kb": 16.9921875
+                        "runtime_seconds": 0.0006268024444580078,
+                        "memory_peak_kb": 31.9609375
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.010754108428955078,
-                        "memory_peak_kb": 182.8310546875
+                        "runtime_seconds": 0.011190176010131836,
+                        "memory_peak_kb": 163.224609375
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0004069805145263672,
-                        "memory_peak_kb": 16.9921875
+                        "runtime_seconds": 0.0004999637603759766,
+                        "memory_peak_kb": 31.9609375
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.010962963104248047,
-                        "memory_peak_kb": 182.658203125
+                        "runtime_seconds": 0.012686014175415039,
+                        "memory_peak_kb": 162.876953125
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0004107952117919922,
-                        "memory_peak_kb": 16.9921875
+                        "runtime_seconds": 0.0005011558532714844,
+                        "memory_peak_kb": 31.9609375
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.010824918746948242,
-                        "memory_peak_kb": 182.7734375
+                        "runtime_seconds": 0.010810136795043945,
+                        "memory_peak_kb": 162.8193359375
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0004248619079589844,
-                        "memory_peak_kb": 16.9921875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.011023283004760742,
-                        "memory_peak_kb": 182.7734375
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0004360675811767578,
-                        "memory_peak_kb": 16.9921875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.010895013809204102,
-                        "memory_peak_kb": 182.8310546875
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0004119873046875,
-                        "memory_peak_kb": 16.9921875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.01115727424621582,
-                        "memory_peak_kb": 182.7158203125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0004253387451171875,
-                        "memory_peak_kb": 16.9921875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.011389970779418945,
-                        "memory_peak_kb": 182.8330078125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0004260540008544922,
-                        "memory_peak_kb": 16.9921875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.011388063430786133,
-                        "memory_peak_kb": 182.890625
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.00043392181396484375,
-                        "memory_peak_kb": 16.9921875
+                        "runtime_seconds": 0.0005009174346923828,
+                        "memory_peak_kb": 31.9609375
                     }
                 ]
             }
@@ -316,140 +246,70 @@
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.3532090187072754,
-                        "memory_peak_kb": 320.83984375
+                        "runtime_seconds": 0.36182689666748047,
+                        "memory_peak_kb": 305.8447265625
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0020990371704101562,
-                        "memory_peak_kb": 19.3994140625
+                        "runtime_seconds": 0.0024869441986083984,
+                        "memory_peak_kb": 33.4794921875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.01708531379699707,
-                        "memory_peak_kb": 140.8779296875
+                        "runtime_seconds": 0.019575119018554688,
+                        "memory_peak_kb": 127.466796875
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0021178722381591797,
-                        "memory_peak_kb": 19.18359375
+                        "runtime_seconds": 0.0037240982055664062,
+                        "memory_peak_kb": 33.4658203125
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.017802953720092773,
-                        "memory_peak_kb": 142.1904296875
+                        "runtime_seconds": 0.019201040267944336,
+                        "memory_peak_kb": 127.73046875
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.002019166946411133,
-                        "memory_peak_kb": 19.26171875
+                        "runtime_seconds": 0.002621889114379883,
+                        "memory_peak_kb": 33.6826171875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.01910114288330078,
-                        "memory_peak_kb": 140.8837890625
+                        "runtime_seconds": 0.05185675621032715,
+                        "memory_peak_kb": 125.8251953125
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.002479076385498047,
-                        "memory_peak_kb": 19.201171875
+                        "runtime_seconds": 0.004081010818481445,
+                        "memory_peak_kb": 33.3173828125
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 0.017213106155395508,
-                        "memory_peak_kb": 141.083984375
+                        "runtime_seconds": 0.02018904685974121,
+                        "memory_peak_kb": 126.3056640625
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.0024466514587402344,
-                        "memory_peak_kb": 19.2587890625
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.01693892478942871,
-                        "memory_peak_kb": 142.76953125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0019800662994384766,
-                        "memory_peak_kb": 19.1298828125
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.017503976821899414,
-                        "memory_peak_kb": 142.708984375
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0019850730895996094,
-                        "memory_peak_kb": 19.1875
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.01741790771484375,
-                        "memory_peak_kb": 142.376953125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.002062082290649414,
-                        "memory_peak_kb": 19.2587890625
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.016965866088867188,
-                        "memory_peak_kb": 141.6767578125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0020449161529541016,
-                        "memory_peak_kb": 19.11328125
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 0.01826310157775879,
-                        "memory_peak_kb": 140.6640625
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.0020079612731933594,
-                        "memory_peak_kb": 19.11328125
+                        "runtime_seconds": 0.004277944564819336,
+                        "memory_peak_kb": 33.462890625
                     }
                 ]
             }
@@ -458,140 +318,70 @@
             {
                 "train": [
                     {
-                        "runtime_seconds": 3.319260835647583,
-                        "memory_peak_kb": 376.7373046875
+                        "runtime_seconds": 3.322685956954956,
+                        "memory_peak_kb": 371.482421875
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.004087686538696289,
-                        "memory_peak_kb": 22.6953125
+                        "runtime_seconds": 0.004213094711303711,
+                        "memory_peak_kb": 25.4140625
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 3.2981302738189697,
-                        "memory_peak_kb": 372.6767578125
+                        "runtime_seconds": 3.622036933898926,
+                        "memory_peak_kb": 369.2021484375
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.004026889801025391,
-                        "memory_peak_kb": 22.5234375
+                        "runtime_seconds": 0.004177093505859375,
+                        "memory_peak_kb": 25.2421875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 3.303900957107544,
-                        "memory_peak_kb": 365.8779296875
+                        "runtime_seconds": 3.586560010910034,
+                        "memory_peak_kb": 366.3232421875
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.004014015197753906,
-                        "memory_peak_kb": 22.5234375
+                        "runtime_seconds": 0.029246091842651367,
+                        "memory_peak_kb": 25.2421875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 3.3401107788085938,
-                        "memory_peak_kb": 366.7421875
+                        "runtime_seconds": 3.645573854446411,
+                        "memory_peak_kb": 366.1484375
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.004033088684082031,
-                        "memory_peak_kb": 22.5234375
+                        "runtime_seconds": 0.00418400764465332,
+                        "memory_peak_kb": 25.2421875
                     }
                 ]
             },
             {
                 "train": [
                     {
-                        "runtime_seconds": 3.317800998687744,
-                        "memory_peak_kb": 368.0673828125
+                        "runtime_seconds": 3.3224761486053467,
+                        "memory_peak_kb": 368.68359375
                     }
                 ],
                 "test": [
                     {
-                        "runtime_seconds": 0.004143953323364258,
-                        "memory_peak_kb": 22.4658203125
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 3.329895257949829,
-                        "memory_peak_kb": 367.6640625
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.004005908966064453,
-                        "memory_peak_kb": 22.5234375
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 3.3049049377441406,
-                        "memory_peak_kb": 367.6064453125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.004024028778076172,
-                        "memory_peak_kb": 22.4658203125
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 3.3236920833587646,
-                        "memory_peak_kb": 371.123046875
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.004006147384643555,
-                        "memory_peak_kb": 22.5234375
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 3.4760830402374268,
-                        "memory_peak_kb": 368.7607421875
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.007381916046142578,
-                        "memory_peak_kb": 22.9033203125
-                    }
-                ]
-            },
-            {
-                "train": [
-                    {
-                        "runtime_seconds": 3.4613099098205566,
-                        "memory_peak_kb": 373.7158203125
-                    }
-                ],
-                "test": [
-                    {
-                        "runtime_seconds": 0.007433891296386719,
-                        "memory_peak_kb": 22.9033203125
+                        "runtime_seconds": 0.004071950912475586,
+                        "memory_peak_kb": 25.2421875
                     }
                 ]
             }
